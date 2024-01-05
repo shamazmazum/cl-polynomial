@@ -124,7 +124,7 @@ of @c(list->polynomial)."
                 (destructuring-bind ((d1 . c1) &rest rest1) ms1
                   (destructuring-bind ((d2 . c2) &rest rest2) ms2
                     (declare (type alex:non-negative-fixnum d1 d2)
-                             (type fixnum c2))
+                             (type fixnum c1 c2))
                     (cond
                       ((> d1 d2)
                        (collect-coeffs (cons (cons d1 c1) acc)

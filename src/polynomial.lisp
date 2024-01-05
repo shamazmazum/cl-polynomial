@@ -6,6 +6,7 @@
 (sera:-> polynomial= (polynomial polynomial)
          (values boolean &optional))
 (defun polynomial= (poly1 poly2)
+  "Test if two polynomials are equal."
   (equalp (polynomial-coeffs poly1)
           (polynomial-coeffs poly2)))
 
@@ -26,7 +27,7 @@
 (sera:-> leading-coeff (polynomial)
          (values fixnum &optional))
 (defun leading-coeff (polynomial)
-  "Return the leading coefficient of POLYNOMIAL"
+  "Return the leading coefficient of a polynomial"
   (let ((first (first (polynomial-coeffs polynomial))))
     (if first (cdr first) 0)))
 
@@ -48,7 +49,10 @@
   "Given a list of integer coefficients convert it to a polynomial. An
 index into the list corresponds with a power for that coefficient, e.g.:
 
-(list->polynomial '(1 2)) -> 2X+1"
+@begin[lang=lisp](code)
+CL-USER> (polynomial:list->polynomial '(1 2))
+2X^1 + X^0
+@end(code)"
   (polynomial
    (si:foldl
     (lambda (acc monomial)
@@ -62,13 +66,19 @@ index into the list corresponds with a power for that coefficient, e.g.:
 (sera:-> sequence->polynomial (sequence)
          (values polynomial &optional))
 (defun sequence->polynomial (seq)
-  "Like list->polynomial, but for all types of sequences."
+  "Like list->polynomial, but for all types of sequences.
+
+@begin[lang=lisp](code)
+CL-USER> (polynomial:sequence->polynomial #*101)
+X^2 + X^0
+@end(code)"
   (list->polynomial (coerce seq 'list)))
 
 (sera:-> polynomial->list (polynomial)
          (values list &optional))
 (defun polynomial->list (polynomial)
-  "Convert a polynomial to a list of coefficients"
+  "Convert a polynomial to a list of coefficients. This is an inverse
+of @c(list->polynomial)."
   (let ((degree (degree polynomial))
         (coeffs (polynomial-coeffs polynomial)))
     (loop for d from 0 to degree collect
@@ -83,9 +93,10 @@ index into the list corresponds with a power for that coefficient, e.g.:
 (sera:-> print-monomial (monomial boolean stream)
          (values &optional))
 (defun print-monomial (monomial lastp stream)
+  (declare (ignore lastp))
   (destructuring-bind (degree . coeff) monomial
     (unless (zerop coeff)
-      (format stream "~:[~d~;~]" (and (= coeff 1) (not lastp)) coeff)
+      (format stream "~:[~d~;~]" (= coeff 1) coeff)
       (format stream "X^~d" degree)))
   (values))
 
@@ -143,8 +154,8 @@ index into the list corresponds with a power for that coefficient, e.g.:
 (sera:-> map-poly ((sera:-> (fixnum) (values fixnum &optional)) polynomial)
          (values polynomial &optional))
 (defun map-poly (fn polynomial)
-  "Given a polynomial \(\sum_n a_n x^n\) return a polynomial
-\(\sum_n fn(a_n)x^n\)"
+  "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
+\\(\\sum_n fn(a_n)x^n\\)."
   (polynomial
    (mapcar
     (lambda (m)
@@ -157,13 +168,20 @@ index into the list corresponds with a power for that coefficient, e.g.:
          (values polynomial &optional))
 (declaim (inline negate))
 (defun negate (polynomial)
+  "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
+\\(\\sum_n -a_n x^n\\).
+
+This is function is equivalent to
+@begin[lang=lisp](code)
+(alexandria:curry #'map-polynomial #'-)
+@end(code)"
   (map-poly #'- polynomial))
 
 (sera:-> subtract (polynomial &rest polynomial)
          (values polynomial &optional))
 (declaim (inline subtract))
 (defun subtract (polynomial &rest polynomials)
-  "Subtract POLYNOMIALS from POLYNOMIAL"
+  "Subtract @c(polynomials) from @c(polynomial)."
   (reduce #'%add (mapcar #'negate polynomials)
           :initial-value polynomial))
 
@@ -199,14 +217,14 @@ index into the list corresponds with a power for that coefficient, e.g.:
          (values polynomial &optional))
 (declaim (inline scale))
 (defun scale (polynomial c)
-  "Multiply polynomial by constant C."
+  "Multiply a polynomial by a constant."
   (map-poly (lambda (a) (* a c)) polynomial))
 
 (sera:-> modulo (polynomial alex:positive-fixnum)
          (values polynomial &optional))
 (defun modulo (polynomial n)
-  "Return a polynomial with every coefficient of POLYNOMIAL being
-taken modulo N."
+  "Return a polynomial with every coefficient of @c(polynomial) being
+taken modulo @c(n)."
   (polynomial
    (reduce
     (lambda (monomial acc)
@@ -221,15 +239,17 @@ taken modulo N."
 (sera:-> invert-integer (alex:positive-fixnum prime)
          (values alex:positive-fixnum &optional))
 (defun invert-integer (n p)
-  "Find a multiplicative inverse of N in \(\mathbb{F}_p\), p being prime."
+  "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{F}_p\\), p
+being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
   (declare (optimize (speed 3)))
   (mod (expt n (- p 2)) p))
 
 (sera:-> divide (polynomial polynomial prime)
          (values polynomial polynomial &optional))
 (defun divide (poly1 poly2 p)
-  "Calculate POLY1 / POLY2 in \(\mathbb{F}_p[x]\), p being prime. A
-quotient and a remainder are returned as 2 values."
+  "Calculate \\(p_1 / p_2\\) where \\(p_1, p_2 \\in
+\\mathbb{F}_p[x]\\), \\(p\\) being prime. A quotient and a remainder
+are returned as 2 values."
   (let ((degree (degree poly2))
         (i (invert-integer (leading-coeff poly2) p)))
     (if (zerop degree)
@@ -260,15 +280,17 @@ quotient and a remainder are returned as 2 values."
          (values polynomial &optional))
 (declaim (inline remainder))
 (defun remainder (poly1 poly2 p)
-  "Calculate a remainder of POLY1 / POLY2 in \(\mathbb{F}_p[x]\), p
-being prime."
+  "Calculate a remainder of \\(p_1 / p_2\\) where \\(p_1, p_2 \\in
+\\mathbb{F}_p[x]\\), \\(p\\) being prime.
+
+This function returns the second value of @c(divide)."
   (nth-value 1 (divide poly1 poly2 p)))
 
 (sera:-> monic-polynomial (polynomial prime)
          (values polynomial fixnum &optional))
 (defun monic-polynomial (polynomial p)
-  "Factor an arbitrary non-zero polynomial in \(\mathbb{F}_p[x]\) into
-a monic polynomial and a constant factor."
+  "Factor an arbitrary non-zero polynomial in \\(\\mathbb{F}_p[x]\\),
+\\(p\\) being prime, into a monic polynomial and a constant factor."
   (let ((c (leading-coeff polynomial)))
     (values
      (if (zerop c)
@@ -281,8 +303,8 @@ a monic polynomial and a constant factor."
 (sera:-> gcd (polynomial polynomial prime)
          (values polynomial &optional))
 (defun gcd (poly1 poly2 p)
-  "Calculate greatest common divisor of POLY1 and POLY2 in
-\(\mathbb{F}_p[x]\)."
+  "Calculate thr greatest common divisor of two polynomials in
+\\(\\mathbb{F}_p[x]\\), p being prime."
   (nth-value
    0 (monic-polynomial
       ;; Two first cases are special cases

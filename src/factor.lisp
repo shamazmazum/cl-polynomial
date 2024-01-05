@@ -16,8 +16,9 @@
          (values list &optional))
 (defun square-free (polynomial p)
   "Perform square-free factorization of a monic polynomial in
-\(\mathbb{F}_p[x]\). A list of tuples \((d_i . f_i)\) is returned, so
-the supplied polynomial is equal to \(\prod_i f_i^{d_i}\)."
+\\(\\mathbb{F}_p[x]\\), \\(p\\) being prime, with \\(\\deg f > 0\\). A list of
+tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
+\\(\\prod_i f_i^{d_i}\\)."
   (labels ((%%collect (p1 p2 acc n multiplicity)
              (if (polynomial= p2 +one+)
                  (values acc p1)
@@ -59,22 +60,24 @@ the supplied polynomial is equal to \(\prod_i f_i^{d_i}\)."
 (sera:-> reducing-polynomials (polynomial prime)
          (values list &optional))
 (defun reducing-polynomials (f p)
-  "Return a list of all f-reducing polynomials for
-\(f \in \mathbb{F}_p[x]\)."
+  "Return a list of all f-reducing polynomials for a monic non-constant
+square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
   (let ((nullspace (nullspace (berlekamp-matrix f p) p)))
     (mapcar #'sequence->polynomial nullspace)))
 
+;; TODO: Generalize to all polynomials
 (sera:-> irreduciblep (polynomial prime)
          (values boolean &optional))
 (defun irreduciblep (f p)
-  "Test if a square-free polynomial \(f \in \mathbb{F}_p[x]\) is irreducible."
+  "Test if a monic non-constant square-free polynomial \\(f \\in
+\\mathbb{F}_p[x]\\) is irreducible."
   (= (length (nullspace (berlekamp-matrix f p) p)) 1))
 
 ;; TODO: This implementation does a lot of redundant work. Optimize it.
 (sera:-> berlekamp-factor (polynomial prime)
          (values list &optional))
 (defun berlekamp-factor (f p)
-  "Given a monic square-free polynomial, return a list of its
+  "Given a monic square-free non-constant polynomial, return a list of its
 factors."
   (let ((rps (remove +one+ (reducing-polynomials f p)
                      :test #'polynomial=)))
@@ -123,10 +126,11 @@ factors."
                 factors))
              factors))))))
 
+;; TODO: Generalize to constant polynomials?
 (sera:-> factor (polynomial prime)
          (values list fixnum &optional))
 (defun factor (polynomial p)
-  "Factor non-zero polynomial in \(\mathbb{F}_p[x]\) into irreducible factors."
+  "Factor a non-constant polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
   (multiple-value-bind (monic m)
       (monic-polynomial polynomial p)
     (values

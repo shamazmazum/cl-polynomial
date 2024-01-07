@@ -92,24 +92,27 @@ of @c(list->polynomial)."
 
 (sera:-> print-monomial (monomial boolean stream)
          (values &optional))
-(defun print-monomial (monomial lastp stream)
-  (declare (ignore lastp))
+(defun print-monomial (monomial firstp stream)
   (destructuring-bind (degree . coeff) monomial
     (unless (zerop coeff)
-      (format stream "~:[~d~;~]" (= coeff 1) coeff)
-      (format stream "X^~d" degree)))
+      (if firstp
+          (when (< coeff 0) (princ "- " stream))
+          (format stream " ~:[+~;-~] " (< coeff 0)))
+      (let ((abs (abs coeff)))
+        (format stream "~:[~d~;~]"
+                (and (= abs 1) (not (zerop degree)))
+                abs))
+      (format stream "~[~;X~:;X^~d~]" degree degree)))
   (values))
 
 (defmethod print-object ((polynomial polynomial) stream)
   (let* ((coeffs (polynomial-coeffs polynomial))
-         (last (car (last coeffs))))
-    (if (polynomial= +zero+ polynomial)
-        (princ "0X^0" stream)
+         (first (first coeffs)))
+    (print-unreadable-object (polynomial stream :type t)
+      (if (polynomial= +zero+ polynomial)
+        (princ 0 stream)
         (dolist (monomial coeffs)
-          (let ((lastp (eq monomial last)))
-            (print-monomial monomial lastp stream)
-            (unless lastp
-              (princ " + " stream)))))))
+          (print-monomial monomial (eq monomial first) stream))))))
 
 (sera:-> %add (polynomial polynomial)
          (values polynomial &optional))

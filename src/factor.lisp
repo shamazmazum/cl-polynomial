@@ -1,8 +1,10 @@
 (in-package :polynomial)
 
-(sera:-> root (polynomial prime)
+(sera:-> x^pk-case (polynomial prime)
          (values polynomial &optional))
-(defun root (poly p)
+(defun x^pk-case (poly p)
+  "Replace a polynomial in the form \\(\\sum_k a_k x^{b_k p}\\) with
+\\(\\sum_k a_k x^{b_k}\\)."
   (polynomial
    (mapcar
     (lambda (m)
@@ -36,7 +38,8 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
                    (%%collect gcd w acc 1 multiplicity)
                  (if (polynomial= rest +one+)
                      %acc
-                     (%collect (root rest p) %acc (* multiplicity p)))))))
+                     (%collect (x^pk-case rest p)
+                               %acc (* multiplicity p)))))))
     (reverse
      (%collect polynomial nil 1))))
 
@@ -55,6 +58,8 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
                  (- (or (cdr (assoc j (polynomial-coeffs x^n-mod-poly))) 0)
                     (if (= i j) 1 0))
                  p)))))
+    ;; The Berlekamp matrix + I has coefficients of polynomials x^{i
+    ;; prime} mod polynomial for 0≤i<deg polynomial in its columns.
     matrix))
 
 (sera:-> reducing-polynomials (polynomial prime)

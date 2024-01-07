@@ -115,6 +115,9 @@ of @c(list->polynomial)."
          (values polynomial &optional))
 (defun %add (poly1 poly2)
   (declare (optimize (speed 3)))
+  ;; Polynomials coefficients are stored in a assoc list sorted by
+  ;; power of X, so we need to compare heads of two lists when adding
+  ;; two polynomials.
   (labels ((collect-coeffs (acc ms1 ms2)
              (cond
                ((null ms1)
@@ -156,7 +159,9 @@ of @c(list->polynomial)."
          (values polynomial &optional))
 (defun map-poly (fn polynomial)
   "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
-\\(\\sum_n fn(a_n)x^n\\)."
+\\(\\sum_n fn(a_n)x^n\\).
+
+This is @c(fmap) for a type @c(data Poly a b = Poly [(a, b)])."
   (polynomial
    (mapcar
     (lambda (m)
@@ -242,6 +247,7 @@ taken modulo @c(n)."
 (defun invert-integer (n p)
   "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{F}_p\\), p
 being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
+  ;; Remember that n^p = n
   (declare (optimize (speed 3)))
   (mod (expt n (- p 2)) p))
 
@@ -318,12 +324,11 @@ This function returns the second value of @c(divide)."
         ((polynomial= poly2 +zero+)
          poly1)
         (t
+         ;; The rest is the Euclidean algorithm
          (let ((degree1 (degree poly1))
                (degree2 (degree poly2)))
            (labels ((%gcd (p1 p2)
-                      (multiple-value-bind (q r)
-                          (divide p1 p2 p)
-                        (declare (ignore q))
+                      (let ((r (remainder p1 p2 p)))
                         (if (polynomial= r +zero+) p2
                             (%gcd p2 r)))))
              (if (> degree1 degree2)

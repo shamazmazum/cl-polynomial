@@ -3,6 +3,9 @@
 ;; A type for matrices
 (deftype matrix () '(simple-array (signed-byte 32) (* *)))
 
+;; A type for rows
+(deftype row () '(simple-array (signed-byte 32) (*)))
+
 ;; A bit more narrow range for primes
 (deftype prime () '(integer 2 #.most-positive-fixnum))
 

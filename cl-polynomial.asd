@@ -11,7 +11,7 @@
                  (:file "linalg")
                  (:file "polynomial")
                  (:file "factor"))
-    :depends-on (:alexandria :serapeum :stateless-iterators :select)
+    :depends-on (:alexandria :serapeum :stateless-iterators)
     :in-order-to ((test-op (load-op "cl-polynomial/tests")))
     :perform (test-op (op system)
                       (declare (ignore op system))

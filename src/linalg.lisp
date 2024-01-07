@@ -1,19 +1,42 @@
 (in-package :polynomial)
 
+(sera:-> row (matrix alex:non-negative-fixnum
+                     &optional
+                     alex:non-negative-fixnum
+                     alex:non-negative-fixnum)
+         (values row &optional))
+(defun row (matrix k &optional (start 0) (end (array-dimension matrix 1)))
+  (declare (optimize (speed 3)))
+  (loop with row = (make-array (- end start) :element-type '(signed-byte 32))
+        for i from start below end
+        for j from 0 by 1 do
+        (setf (aref row j)
+              (aref matrix k i))
+        finally (return row)))
+
+(sera:-> (setf row) (row matrix alex:non-negative-fixnum)
+         (values row &optional))
+(defun (setf row) (row matrix k)
+  (declare (optimize (speed 3)))
+  (dotimes (i (array-dimension matrix 1))
+    (setf (aref matrix k i) (aref row i)))
+  row)
+
 (sera:-> triangularize! (matrix prime)
          (values matrix &optional))
 (defun triangularize! (matrix p)
   "Bring a matrix to an echelon form using row operations"
+  (declare (optimize (speed 3)))
   (destructuring-bind (n m)
       (array-dimensions matrix)
     (loop for i below n do
           ;; Find a row with the left-most non-zero leading element in
           ;; rows from i to n.
           (multiple-value-bind (leading-row leading-column)
-              (loop with row-idx = n
-                    with col-idx = m
+              (loop with row-idx fixnum = n
+                    with col-idx fixnum = m
                     for j from i below n
-                    for row = (select:select matrix j (select:range 0 m))
+                    for row = (row matrix j)
                     for pos = (position-if
                                (lambda (x) (not (zerop x)))
                                row)
@@ -27,57 +50,48 @@
 
             ;; Swap this row with i-th row
             (rotatef
-             (select:select matrix i (select:range 0 m))
-             (select:select matrix leading-row (select:range 0 m)))
+             (row matrix i)
+             (row matrix leading-row))
 
             ;; Now cancel the left-most leading element in all rows from i+1
-            (loop with rowi = (select:select matrix i (select:range 0 m))
+            (loop with rowi = (row matrix i)
                   with elt1 = (aref rowi leading-column)
                   for j from (1+ i) below n
-                  for rowj = (select:select matrix j (select:range 0 m))
+                  for rowj = (row matrix j)
                   for elt2 = (aref rowj leading-column)
                   when (not (zerop elt2)) do
                   (let* ((mul (mod (* (invert-integer elt2 p) elt1) p))
-                         (new-row (map '(vector (signed-byte 32))
-                                       (lambda (x1 x2)
-                                         (mod (- x1 (* mul x2)) p))
-                                       rowi rowj)))
-                    (setf (select:select matrix j (select:range 0 m)) new-row))))))
+                         (new-row (map-into
+                                   rowj
+                                   (lambda (x1 x2)
+                                     (declare (type (signed-byte 32) x1 x2))
+                                     (mod (- x1 (* mul x2)) p))
+                                   rowi rowj)))
+                    (setf (row matrix j) new-row))))))
   matrix)
-
-(sera:-> identity-matrix (alex:positive-fixnum)
-         (values matrix &optional))
-(defun identity-matrix (n)
-  "Return NxN identity matrix"
-  (let ((matrix (make-array (list n n)
-                            :element-type '(signed-byte 32)
-                            :initial-element 0)))
-    (loop for i below n do
-          (setf (aref matrix i i) 1))
-    matrix))
 
 (sera:-> attach-identity (matrix)
          (values matrix &optional))
 (defun attach-identity (matrix)
   "Attach an identity matrix to the right of a square matrix"
+  (declare (optimize (speed 3)))
   (destructuring-bind (n m)
       (array-dimensions matrix)
+    (declare (type fixnum n m))
     (assert (= n m))
-    (let ((id (identity-matrix n))
-          (result (make-array (list n (* n 2))
-                              :element-type '(signed-byte 32))))
-      (setf (select:select result
-              (select:range 0 n)
-              (select:range 0 n))
-            matrix
-            (select:select result
-              (select:range 0 n)
-              (select:range n (* n 2)))
-            id)
-      result)))
+    (loop with result = (make-array (list n (* n 2)) :element-type '(signed-byte 32))
+          for i below n do
+          (loop for j below (* n 2) do
+                (setf (aref result i j)
+                      (cond
+                        ((< j n) (aref matrix i j))
+                        ((= (- j n) i) 1)
+                        (t 0))))
+          finally (return result))))
 
 (sera:-> %nullspace (matrix prime)
          (values matrix &optional))
+(declaim (inline %nullspace))
 (defun %nullspace (matrix p)
   (triangularize! (attach-identity matrix) p))
 
@@ -89,6 +103,6 @@
   (let ((nullspace (%nullspace m p))
         (n (array-dimension m 0)))
     (loop for i below n
-          for r1 = (select:select nullspace (- n i 1) (select:range 0 n))
-          for r2 = (select:select nullspace (- n i 1) (select:range n (* n 2)))
+          for r1 = (row nullspace (- n i 1) 0 n)
+          for r2 = (row nullspace (- n i 1) n (* n 2))
           while (every #'zerop r1) collect r2)))

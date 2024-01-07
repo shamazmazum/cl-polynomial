@@ -114,6 +114,7 @@ of @c(list->polynomial)."
 (sera:-> %add (polynomial polynomial)
          (values polynomial &optional))
 (defun %add (poly1 poly2)
+  (declare (optimize (speed 3)))
   (labels ((collect-coeffs (acc ms1 ms2)
              (cond
                ((null ms1)

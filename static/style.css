@@ -1,88 +1,64 @@
-body {
-    color: #444;
-    background: #FAFBFB;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+/* Template style */
 
+@import url(http://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic);
+@import url(http://fonts.googleapis.com/css?family=Source+Serif+Pro:400,600,700);
+@import url(http://fonts.googleapis.com/css?family=Source+Code+Pro);
+
+body {
+    font-family: 'Source Serif Pro', serif;
+    color: #333;
+    font-weight: 400;
+    font-size: 18px;
+
+    background: white;
+}
+
+/* General layout */
+
+body {
+    width: 100%;
     display: flex;
     min-height: 100vh;
     flex-direction: column;
 }
 
-/* Layout */
-
-.doc-title {
-    height: 120px;
-    line-height: 120px;
-    padding-left: 70px;
-    font-size: 36px;
+main {
+    width: 75%;
+    min-height: 100vh;
+    float: left;
+    padding: 0 35px;
 }
 
 article {
-    width: 80%;
+    flex: 1;
+    margin-bottom: 100px;
+}
+
+/* Heading style */
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, FreeSerif, serif;
+}
+
+.doc-title {
+    margin: 25px 75px;
+}
+
+.codex-document, .codex-section {
+    width: 60%;
     margin: 0 auto;
-
-    flex: 1;
-    display: flex;
-    flex-direction: row;
 }
 
-article aside {
-    width: 180px;
-    margin-top: 14px;
-    margin-bottom: 14px;
-    padding-top: 10px;
-    padding-left: 15px;
-
-    background: #FCFDFF;
-
-    border-radius: 4px 0 0 4px;
-    box-shadow: 0 0 3px #ccc;
+.codex-document-title {
+    width: 60%;
+    margin: 0 auto;
 }
 
-article main {
-    flex: 1;
-    padding: 25px;
-
-    background: white;
-
-    border-radius: 4px;
-    box-shadow: 0 0 3px #ccc;
+main > *:first-child {
+    margin-top: 0;
 }
 
-article header {
-    border-bottom: 1px solid #ccc;
-    margin-bottom: 25px;
-}
-
-article header .section-title {
-    text-align: center;
-    font-size: 36px;
-    padding-bottom: 25px;
-}
-
-/* Links */
-
-a {
-    text-decoration: none;
-    color: #3498db;
-}
-
-/* Content */
-
-.content {
-    font-size: 16px;
-    font-weight: 400;
-}
-
-.content p code {
-    font-size: 16px;
-}
-
-.content > *, .content blockquote > * {
-    margin-bottom: 25px;
-}
-
-.content h1 {
+main h1 {
     font-size: 36px;
 
     margin-top: 36px;
@@ -91,7 +67,7 @@ a {
     border-bottom: 1px solid #eee;
 }
 
-.content h2 {
+main h2 {
     font-size: 28px;
 
     margin-top: 28px;
@@ -100,89 +76,135 @@ a {
     border-bottom: 1px solid #eee;
 }
 
-.content h3 {
+main h3 {
     font-size: 24px;
 
     margin-top: 24px;
 }
 
-.content h4 {
+main h4 {
     font-size: 20px;
 
     margin-top: 20;
 }
 
-.content h5 {
+main h5 {
     font-size: 1em;
 
     margin-top: 18px;
 }
 
-.content h6 {
+main h6 {
     font-size: 1em;
 
     margin-top: 18px;
 }
 
-.content ul li, .content ol li, .content dl dd {
-    margin-left: 30px;
+/* Error style */
+
+.codex-error, .codex-warning {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
-.content dl dt {
+/* Separation between elements */
+
+main > *, dd > *, blockquote > * {
+    margin-bottom: 15px;
+}
+
+/* Lists */
+
+dd, li {
+    margin-left: 40px;
+}
+
+dt {
     font-weight: bold;
+    margin-top: 15px;
 }
+
+li {
+    margin-top: 15px;
+}
+
+/* Code */
+
+code {
+    font-family: Consolas, 'Liberation Mono', Courier, monospace;
+}
+
+pre > code {
+    font-size: 13px;
+}
+
+/* Link Style */
+
+a {
+    color: #AD3108;
+    text-decoration: none;
+}
+
+/* Quote style */
+
+blockquote {
+    padding-left: 25px;
+    border-left: 1px solid #ccc;
+}
+
+/* Table style */
 
 table {
     border-collapse: collapse;
-    margin: 0 auto;
 }
 
 td {
-    padding: 6px;
-    min-width: 100px;
+    padding: 15px;
 }
 
-tr:first-child td {
-    text-align: center;
-    font-weight: bold;
-
-    border-bottom: 1px solid #ccc;
+table, td, th {
+    border: 1px solid black;
 }
 
-blockquote {
-    padding-left: 40px;
-    border-left: 2px solid #ccc;
-}
+/* Images and figures */
 
 img {
-    display: block;
     max-width: 100%;
-    margin: 0 auto;
 }
 
 /* Table of Contents */
 
-.toc li {
-    list-style-type: none;
+.toc {
+    width: 25%;
+    float: left;
+    padding: 0 35px;
 }
 
 .toc a {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 13px;
+    color: #333;
+    text-decoration: none;
+    position: relative;
+}
+
+.toc li {
+    list-style-type: none;
+    font-size: 19px;
+    margin-left: 0;
+    margin-bottom: 10px;
 }
 
 /* Footer */
 
 footer {
+    height: 120px;
+    line-height: 120px;
+    background: #f9f9f9;
 }
 
 footer .info {
-    font-size: 16px;
-
-    height: 100px;
-    line-height: 100px;
-    text-align: center;
+    margin: 0 75px;
+    text-align: right;
 }
 *, *:after, *:before {
   margin: 0;

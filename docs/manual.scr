@@ -9,16 +9,19 @@
    Few examples:
    @begin[lang=lisp](code)
 CL-USER> (polynomial:sequence->polynomial #*1110010101001)
-X^12 + X^9 + X^7 + X^5 + X^2 + X^1 + X^0
+#<POLYNOMIAL:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1>
 CL-USER> (polynomial:factor * 11)
-((1 . X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X^1 + 9X^0) (1 . X^1 + 5X^0)
- (1 . X^5 + 10X^3 + X^0))
+((1 . #<POLYNOMIAL:POLYNOMIAL X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X + 9>)
+ (1 . #<POLYNOMIAL:POLYNOMIAL X + 5>)
+ (1 . #<POLYNOMIAL:POLYNOMIAL X^5 + 10X^3 + 1>))
 1
 
 CL-USER> (polynomial:list->polynomial '(1 0 1 1 0 0 1 0 1 1))
-X^9 + X^8 + X^6 + X^3 + X^2 + X^0
+#<POLYNOMIAL:POLYNOMIAL X^9 + X^8 + X^6 + X^3 + X^2 + 1>
 CL-USER> (polynomial:factor * 2)
-((1 . X^3 + X^2 + X^0) (2 . X^2 + X^1 + X^0) (2 . X^1 + X^0))
+((1 . #<POLYNOMIAL:POLYNOMIAL X^3 + X^2 + 1>)
+ (2 . #<POLYNOMIAL:POLYNOMIAL X^2 + X + 1>)
+ (2 . #<POLYNOMIAL:POLYNOMIAL X + 1>))
 1
    @end(code)
 @end(section)

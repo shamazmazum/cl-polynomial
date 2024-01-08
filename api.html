@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+  API &ndash; cl-polynomial
+</title>
+    <link rel="stylesheet" href="static/style.css"/>
+    
+  <link rel="stylesheet" href="static/highlight.css"/>
+  <script src="static/highlight.js"></script>
+  <script src="static/load-mathjax.js" async></script>
+  <style>
+   /* Highlight the current top-level TOC item, and hide the TOC of all other items */
+
+   .toc a[data-node="api"] {
+       /*color: #AD3108;*/
+   }
+
+   .toc ol {
+       display: none;
+   }
+
+   .toc li a[data-node="api"] {
+       font-weight: bold;
+   }
+
+   .toc li a[data-node="api"] + ol {
+       display: block;
+   }
+
+   .toc li a[data-node="api"] + ol li {
+       margin-left: 10px;
+   }
+  </style>
+
+  </head>
+  <body>
+    
+  <h1 class="doc-title">cl-polynomial</h1>
+  <article id="article" data-section="api">
+    <aside>
+      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a></li></ol>
+    </aside>
+    <main class="codex-section">
+      <header>
+        <h2 class="section-title">API</h2>
+      </header>
+      <div class="content">
+        
+   
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">list-&gt;polynomial</code><code class="codex-lambda-list">(coeffs)</code><div class="codex-docstring">Given a list of integer coefficients convert it to a polynomial. An
+index into the list corresponds with a power for that coefficient, e.g.:<pre><code class="lisp">CL-USER&gt; (polynomial:list-&gt;polynomial '(1 2))
+2X^1 + X^0
+</code></pre></div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">sequence-&gt;polynomial</code><code class="codex-lambda-list">(seq)</code><div class="codex-docstring">Like list-&gt;polynomial, but for all types of sequences.<pre><code class="lisp">CL-USER&gt; (polynomial:sequence-&gt;polynomial #*101)
+X^2 + X^0
+</code></pre></div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial-&gt;list</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Convert a polynomial to a list of coefficients. This is an inverse
+of <code>list-&gt;polynomial</code>.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">degree</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return degree of a polynomial</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">leading-coeff</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return the leading coefficient of a polynomial</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial=</code><code class="codex-lambda-list">(poly1 poly2)</code><div class="codex-docstring">Test if two polynomials are equal.</div></div>
+     <div class="codex-doc-node codex-variable"><code class="codex-name">+one+</code><div class="codex-docstring">Multiplicative identity</div></div>
+     <div class="codex-doc-node codex-variable"><code class="codex-name">+zero+</code><div class="codex-docstring">Additive identity</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">map-poly</code><code class="codex-lambda-list">(fn polynomial)</code><div class="codex-docstring"><p>Given a polynomial \(\sum_n a_n x^n\) return a polynomial
+\(\sum_n fn(a_n)x^n\).</p><p>This is <code>fmap</code> for a type <code>data Poly a b = Poly [(a, b)]</code>.</p></div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">negate</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring"><p>Given a polynomial \(\sum_n a_n x^n\) return a polynomial
+\(\sum_n -a_n x^n\).</p><p>This is function is equivalent to
+</p><pre><code class="lisp">(alexandria:curry #'map-polynomial #'-)
+</code></pre></div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">add</code><code class="codex-lambda-list">(&amp;rest polynomials)</code><div class="codex-docstring">Add polynomials together</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">subtract</code><code class="codex-lambda-list">(polynomial &amp;rest polynomials)</code><div class="codex-docstring">Subtract <code>polynomials</code> from <code>polynomial</code>.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">multiply</code><code class="codex-lambda-list">(&amp;rest polynomials)</code><div class="codex-docstring">Multiply polynomials</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">scale</code><code class="codex-lambda-list">(polynomial c)</code><div class="codex-docstring">Multiply a polynomial by a constant.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">modulo</code><code class="codex-lambda-list">(polynomial n)</code><div class="codex-docstring">Return a polynomial with every coefficient of <code>polynomial</code> being
+taken modulo <code>n</code>.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">divide</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Calculate \(p_1 / p_2\) where \(p_1, p_2 \in
+\mathbb{F}_p[x]\), \(p\) being prime. A quotient and a remainder
+are returned as 2 values.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">invert-integer</code><code class="codex-lambda-list">(n p)</code><div class="codex-docstring">Find a multiplicative inverse of \(n\) in \(\mathbb{F}_p\), p
+being prime, i.e. find \(x\) such that \(xn = nx = 1\).</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">remainder</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring"><p>Calculate a remainder of \(p_1 / p_2\) where \(p_1, p_2 \in
+\mathbb{F}_p[x]\), \(p\) being prime.</p><p>This function returns the second value of <code>divide</code>.</p></div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcd</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Calculate thr greatest common divisor of two polynomials in
+\(\mathbb{F}_p[x]\), p being prime.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">monicp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial is monic</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">constantp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial has degree 0.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">derivative</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a formal derivative of a polynomial.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">square-free</code><code class="codex-lambda-list">(polynomial p)</code><div class="codex-docstring">Perform square-free factorization of a monic polynomial in
+\(\mathbb{F}_p[x]\), \(p\) being prime, with \(\deg f &gt; 0\). A list of
+tuples \((d_i . f_i)\) is returned, so the supplied polynomial is equal to
+\(\prod_i f_i^{d_i}\).</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">reducing-polynomials</code><code class="codex-lambda-list">(f p)</code><div class="codex-docstring">Return a list of all f-reducing polynomials for a monic non-constant
+square-free polynomial \(f \in \mathbb{F}_p[x]\).</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">factor</code><code class="codex-lambda-list">(polynomial p)</code><div class="codex-docstring">Factor a non-constant polynomial in \(\mathbb{F}_p[x]\) into irreducible factors.</div></div>
+   
+
+      </div>
+    </main>
+  </article>
+  <footer>
+    <div class="info">
+      Created with <a href="https://github.com/CommonDoc/codex">Codex</a>.
+    </div>
+  </footer>
+  <script>
+   HighlightLisp.highlight_auto();
+  </script>
+
+  </body>
+</html>

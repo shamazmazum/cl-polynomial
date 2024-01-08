@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+  Overview &ndash; cl-polynomial
+</title>
+    <link rel="stylesheet" href="static/style.css"/>
+    
+  <link rel="stylesheet" href="static/highlight.css"/>
+  <script src="static/highlight.js"></script>
+  <script src="static/load-mathjax.js" async></script>
+  <style>
+   /* Highlight the current top-level TOC item, and hide the TOC of all other items */
+
+   .toc a[data-node="index"] {
+       /*color: #AD3108;*/
+   }
+
+   .toc ol {
+       display: none;
+   }
+
+   .toc li a[data-node="index"] {
+       font-weight: bold;
+   }
+
+   .toc li a[data-node="index"] + ol {
+       display: block;
+   }
+
+   .toc li a[data-node="index"] + ol li {
+       margin-left: 10px;
+   }
+  </style>
+
+  </head>
+  <body>
+    
+  <h1 class="doc-title">cl-polynomial</h1>
+  <article id="article" data-section="index">
+    <aside>
+      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a></li></ol>
+    </aside>
+    <main class="codex-section">
+      <header>
+        <h2 class="section-title">Overview</h2>
+      </header>
+      <div class="content">
+        <p>
+   <code>cl-polynomial</code> is a library for factoring polynomials in one variable over
+   finite fields with a prime number of elements \(p\). <b>NB:</b> Many provided
+   functions require \(p\) as their last argument. No special tests are done
+   to check if \(p\) is really a prime and behaviour is undefined if it is not
+   (e.g. some functions can simply become non-terminating).</p><p>   Few examples:
+   </p><pre><code class="lisp">CL-USER&gt; (polynomial:sequence-&gt;polynomial #*1110010101001)
+X^12 + X^9 + X^7 + X^5 + X^2 + X^1 + X^0
+CL-USER&gt; (polynomial:factor * 11)
+((1 . X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X^1 + 9X^0)(1 . X^1 + 5X^0)
+ (1 . X^5 + 10X^3 + X^0))
+1
+
+CL-USER&gt; (polynomial:list-&gt;polynomial '(1 0 1 1 0 0 1 0 1 1))
+X^9 + X^8 + X^6 + X^3 + X^2 + X^0
+CL-USER&gt; (polynomial:factor * 2)
+((1 . X^3 + X^2 + X^0)(2 . X^2 + X^1 + X^0)(2 . X^1 + X^0))
+1
+   </code></pre><p>
+</p>
+      </div>
+    </main>
+  </article>
+  <footer>
+    <div class="info">
+      Created with <a href="https://github.com/CommonDoc/codex">Codex</a>.
+    </div>
+  </footer>
+  <script>
+   HighlightLisp.highlight_auto();
+  </script>
+
+  </body>
+</html>

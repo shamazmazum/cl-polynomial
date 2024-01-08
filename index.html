@@ -56,16 +56,19 @@
    to check if \(p\) is really a prime and behaviour is undefined if it is not
    (e.g. some functions can simply become non-terminating).</p><p>   Few examples:
    </p><pre><code class="lisp">CL-USER&gt; (polynomial:sequence-&gt;polynomial #*1110010101001)
-X^12 + X^9 + X^7 + X^5 + X^2 + X^1 + X^0
+#&lt;POLYNOMIAL:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1&gt;
 CL-USER&gt; (polynomial:factor * 11)
-((1 . X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X^1 + 9X^0)(1 . X^1 + 5X^0)
- (1 . X^5 + 10X^3 + X^0))
+((1 . #&lt;POLYNOMIAL:POLYNOMIAL X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X + 9&gt;)
+ (1 . #&lt;POLYNOMIAL:POLYNOMIAL X + 5&gt;)
+ (1 . #&lt;POLYNOMIAL:POLYNOMIAL X^5 + 10X^3 + 1&gt;))
 1
 
 CL-USER&gt; (polynomial:list-&gt;polynomial '(1 0 1 1 0 0 1 0 1 1))
-X^9 + X^8 + X^6 + X^3 + X^2 + X^0
+#&lt;POLYNOMIAL:POLYNOMIAL X^9 + X^8 + X^6 + X^3 + X^2 + 1&gt;
 CL-USER&gt; (polynomial:factor * 2)
-((1 . X^3 + X^2 + X^0)(2 . X^2 + X^1 + X^0)(2 . X^1 + X^0))
+((1 . #&lt;POLYNOMIAL:POLYNOMIAL X^3 + X^2 + 1&gt;)
+ (2 . #&lt;POLYNOMIAL:POLYNOMIAL X^2 + X + 1&gt;)
+ (2 . #&lt;POLYNOMIAL:POLYNOMIAL X + 1&gt;))
 1
    </code></pre><p>
 </p>

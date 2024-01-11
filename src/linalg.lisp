@@ -29,7 +29,7 @@
   (declare (optimize (speed 3)))
   (destructuring-bind (n m)
       (array-dimensions matrix)
-    (loop for i below n do
+    (loop for i fixnum below n do
           ;; Find a row with the left-most non-zero leading element in
           ;; rows from i to n.
           (multiple-value-bind (leading-row leading-column)

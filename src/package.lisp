@@ -27,6 +27,7 @@
            #:monicp
            #:constantp
            #:gcd
+           #:gcdex
            #:derivative
            #:square-free
            #:reducing-polynomials

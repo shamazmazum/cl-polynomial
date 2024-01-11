@@ -313,31 +313,66 @@ This function returns the second value of @c(divide)."
 (sera:-> gcd (polynomial polynomial prime)
          (values polynomial &optional))
 (defun gcd (poly1 poly2 p)
-  "Calculate thr greatest common divisor of two polynomials in
+  "Calculate the greatest common divisor of two polynomials in
 \\(\\mathbb{F}_p[x]\\), p being prime."
-  (nth-value
-   0 (monic-polynomial
-      ;; Two first cases are special cases
-      ;; gcd(a, 0) = monic(a) and
-      ;; gcd(0, a) = monic(a) and
-      ;; gcd(0, 0) = 0
-      (cond
-        ((polynomial= poly1 +zero+)
-         poly2)
-        ((polynomial= poly2 +zero+)
-         poly1)
-        (t
-         ;; The rest is the Euclidean algorithm
-         (let ((degree1 (degree poly1))
-               (degree2 (degree poly2)))
-           (labels ((%gcd (p1 p2)
-                      (let ((r (remainder p1 p2 p)))
-                        (if (polynomial= r +zero+) p2
-                            (%gcd p2 r)))))
-             (if (> degree1 degree2)
-                 (%gcd poly1 poly2)
-                 (%gcd poly2 poly1))))))
-      p)))
+  ;; Two first cases are special cases
+  ;; gcd(a, 0) = a and
+  ;; gcd(0, a) = a and
+  ;; gcd(0, 0) = 0
+  (cond
+    ((polynomial= poly1 +zero+)
+     poly2)
+    ((polynomial= poly2 +zero+)
+     poly1)
+    (t
+     ;; The rest is the Euclidean algorithm
+     (let ((degree1 (degree poly1))
+           (degree2 (degree poly2)))
+       (labels ((%gcd (p1 p2)
+                  (let ((r (remainder p1 p2 p)))
+                    (if (polynomial= r +zero+)
+                        (nth-value 0 (monic-polynomial p2 p))
+                        (%gcd p2 r)))))
+         (if (> degree1 degree2)
+             (%gcd poly1 poly2)
+             (%gcd poly2 poly1)))))))
+
+(sera:-> gcdex (polynomial polynomial prime)
+         (values polynomial polynomial polynomial &optional))
+(defun gcdex (poly1 poly2 p)
+  "Find \\(\\gcd(p_1, p_2)\\), \\(p_1, p_2 \\in \\mathbb{F}_p[x]\\)
+and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
+\\gcd(p_1, p_2)\\) with minimal possible degree of \\(a\\) and
+\\(b\\)."
+  ;; POLY1 == 0 and/or POLY2 == 0 are special cases covered by COND
+  (cond
+    ((polynomial= poly1 +zero+)
+     (values poly2 +zero+ +one+))
+    ((polynomial= poly2 +zero+)
+     (values poly1 +one+ +zero+))
+    (t
+     ;; This is an extended Euclidean algorithm
+     (labels ((%gcd (p1 p2 s0 s1 d0 d1)
+                (multiple-value-bind (q r)
+                    (divide p1 p2 p)
+                  (let ((s (modulo (subtract s0 (multiply q s1)) p))
+                        (d (modulo (subtract d0 (multiply q d1)) p)))
+                    (if (polynomial= r +zero+)
+                        ;; Convert GCD to monic polynomial
+                        (multiple-value-bind (m s)
+                            (monic-polynomial p2 p)
+                          (let ((s^-1 (invert-integer s p)))
+                            (values
+                             m
+                             (modulo (scale s1 s^-1) p)
+                             (modulo (scale d1 s^-1) p))))
+                        (%gcd p2 r s1 s d1 d))))))
+       (if (> (degree poly1)
+              (degree poly2))
+           (%gcd poly1 poly2 +one+ +zero+ +zero+ +one+)
+           (multiple-value-bind (gcd s d)
+               (%gcd poly2 poly1 +one+ +zero+ +zero+ +one+)
+             (values gcd d s)))))))
 
 (sera:-> derivative (polynomial)
          (values polynomial &optional))

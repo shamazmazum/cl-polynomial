@@ -126,6 +126,21 @@
                 (is (p:polynomial= (p:remainder lcm poly1 prime) p:+zero+))
                 (is (p:polynomial= (p:remainder lcm poly2 prime) p:+zero+))))))))
 
+(test gcdex
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let* ((prime (random-prime state))
+               (poly1 (random-poly prime state))
+               (poly2 (random-poly prime state)))
+          (multiple-value-bind (gcd a b)
+              (p:gcdex poly1 poly2 prime)
+            (is (p:polynomial= gcd (p:gcd poly1 poly2 prime)))
+            (is (p:polynomial= (p:modulo
+                                (p:add (p:multiply poly1 a)
+                                       (p:multiply poly2 b))
+                                prime)
+                               gcd))))))
+
 (in-suite factor-finite)
 
 (test square-free

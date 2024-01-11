@@ -84,8 +84,12 @@ are returned as 2 values.</div></div>
 being prime, i.e. find \(x\) such that \(xn = nx = 1\).</div></div>
      <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">remainder</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring"><p>Calculate a remainder of \(p_1 / p_2\) where \(p_1, p_2 \in
 \mathbb{F}_p[x]\), \(p\) being prime.</p><p>This function returns the second value of <code>divide</code>.</p></div></div>
-     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcd</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Calculate thr greatest common divisor of two polynomials in
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcd</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Calculate the greatest common divisor of two polynomials in
 \(\mathbb{F}_p[x]\), p being prime.</div></div>
+     <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcdex</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Find \(\gcd(p_1, p_2)\), \(p_1, p_2 \in \mathbb{F}_p[x]\)
+and also find a solution of Bezout's equation \(a p_1 + b p_2 =
+\gcd(p_1, p_2)\) with minimal possible degree of \(a\) and
+\(b\).</div></div>
      <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">monicp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial is monic</div></div>
      <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">constantp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial has degree 0.</div></div>
      <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">derivative</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a formal derivative of a polynomial.</div></div>

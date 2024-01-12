@@ -36,5 +36,5 @@
            #:factor
 
            #:lift-factors
-           #:content-free
+           #:remove-content
            #:suitable-prime))

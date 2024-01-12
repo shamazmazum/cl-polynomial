@@ -229,6 +229,16 @@ This is function is equivalent to
   "Multiply a polynomial by a constant."
   (map-poly (lambda (a) (* a c)) polynomial))
 
+(sera:-> mod-sym (fixnum alex:positive-fixnum)
+         (values fixnum &optional))
+(defun mod-sym (x n)
+  (declare (optimize (speed 3)))
+  (let ((mod (mod x n))
+        (half (floor n 2)))
+    (if (or (= n 2)
+            (<= mod  half))
+        mod (- mod n))))
+
 (sera:-> modulo (polynomial alex:positive-fixnum)
          (values polynomial &optional))
 (defun modulo (polynomial n)
@@ -239,20 +249,20 @@ taken modulo @c(n)."
     (lambda (monomial acc)
       (declare (type monomial monomial))
       (destructuring-bind (d . c) monomial
-        (let ((c (mod c n)))
+        (let ((c (mod-sym c n)))
           (if (zerop c) acc (cons (cons d c) acc)))))
     (polynomial-coeffs polynomial)
     :from-end t
     :initial-value nil)))
 
-(sera:-> invert-integer (alex:positive-fixnum prime)
-         (values alex:positive-fixnum &optional))
+(sera:-> invert-integer (fixnum prime)
+         (values fixnum &optional))
 (defun invert-integer (n p)
   "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{F}_p\\), p
 being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
   ;; Remember that n^p = n
   (declare (optimize (speed 3)))
-  (mod (expt n (- p 2)) p))
+  (mod-sym (expt n (- p 2)) p))
 
 (sera:-> divide (polynomial polynomial prime)
          (values polynomial polynomial &optional))
@@ -276,7 +286,7 @@ are returned as 2 values."
                        (let ((remainder-coeffs (polynomial-coeffs remainder)))
                          (destructuring-bind (d . c) (car remainder-coeffs)
                            (let* ((quotient-degree (- d degree))
-                                  (quotient-coeff (mod (* c i) p))
+                                  (quotient-coeff (mod-sym (* c i) p))
                                   (monomial (cons quotient-degree quotient-coeff)))
                              (division-step
                               (cons monomial quotient-coeffs)
@@ -310,32 +320,41 @@ This function returns the second value of @c(divide)."
           (scale polynomial (invert-integer c p)) p))
      c)))
 
+(sera:-> positive-lc (polynomial)
+         (values polynomial &optional))
+(declaim (inline positive-lc))
+(defun positive-lc (polynomial)
+  (let ((lc (leading-coeff polynomial)))
+    (if (> lc 0) polynomial
+        (negate polynomial))))
+
 (sera:-> gcd (polynomial polynomial prime)
          (values polynomial &optional))
 (defun gcd (poly1 poly2 p)
   "Calculate the greatest common divisor of two polynomials in
 \\(\\mathbb{F}_p[x]\\), p being prime."
   ;; Two first cases are special cases
-  ;; gcd(a, 0) = a and
-  ;; gcd(0, a) = a and
+  ;; gcd(a, 0) = positive-lc(a) and
+  ;; gcd(0, a) = positive-lc(a) and
   ;; gcd(0, 0) = 0
-  (cond
-    ((polynomial= poly1 +zero+)
-     poly2)
-    ((polynomial= poly2 +zero+)
-     poly1)
-    (t
-     ;; The rest is the Euclidean algorithm
-     (let ((degree1 (degree poly1))
-           (degree2 (degree poly2)))
-       (labels ((%gcd (p1 p2)
-                  (let ((r (remainder p1 p2 p)))
-                    (if (polynomial= r +zero+)
-                        (nth-value 0 (monic-polynomial p2 p))
-                        (%gcd p2 r)))))
-         (if (> degree1 degree2)
-             (%gcd poly1 poly2)
-             (%gcd poly2 poly1)))))))
+  (positive-lc
+   (cond
+     ((polynomial= poly1 +zero+)
+      poly2)
+     ((polynomial= poly2 +zero+)
+      poly1)
+     (t
+      ;; The rest is the Euclidean algorithm
+      (let ((degree1 (degree poly1))
+            (degree2 (degree poly2)))
+        (labels ((%gcd (p1 p2)
+                   (let ((r (remainder p1 p2 p)))
+                     (if (polynomial= r +zero+)
+                         (nth-value 0 (monic-polynomial p2 p))
+                         (%gcd p2 r)))))
+          (if (> degree1 degree2)
+              (%gcd poly1 poly2)
+              (%gcd poly2 poly1))))))))
 
 (sera:-> gcdex (polynomial polynomial prime)
          (values polynomial polynomial polynomial &optional))
@@ -347,9 +366,11 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
   ;; POLY1 == 0 and/or POLY2 == 0 are special cases covered by COND
   (cond
     ((polynomial= poly1 +zero+)
-     (values poly2 +zero+ +one+))
+     (values (positive-lc poly2) +zero+
+             (scale +one+ (signum (leading-coeff poly2)))))
     ((polynomial= poly2 +zero+)
-     (values poly1 +one+ +zero+))
+     (values (positive-lc poly1)
+             (scale +one+ (signum (leading-coeff poly1))) +zero+))
     (t
      ;; This is an extended Euclidean algorithm
      (labels ((%gcd (p1 p2 s0 s1 d0 d1)
@@ -363,7 +384,7 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
                             (monic-polynomial p2 p)
                           (let ((s^-1 (invert-integer s p)))
                             (values
-                             m
+                             (positive-lc m)
                              (modulo (scale s1 s^-1) p)
                              (modulo (scale d1 s^-1) p))))
                         (%gcd p2 r s1 s d1 d))))))

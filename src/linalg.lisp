@@ -1,5 +1,6 @@
 (in-package :polynomial)
 
+;; Accessors for rows in a matrix (with additional start and stop indices).
 (sera:-> row (matrix alex:non-negative-fixnum
                      &optional
                      alex:non-negative-fixnum
@@ -60,12 +61,12 @@
                   for rowj = (row matrix j)
                   for elt2 = (aref rowj leading-column)
                   when (not (zerop elt2)) do
-                  (let* ((mul (mod (* (invert-integer elt2 p) elt1) p))
+                  (let* ((mul (mod-sym (* (invert-integer elt2 p) elt1) p))
                          (new-row (map-into
                                    rowj
                                    (lambda (x1 x2)
                                      (declare (type (signed-byte 32) x1 x2))
-                                     (mod (- x1 (* mul x2)) p))
+                                     (mod-sym (- x1 (* mul x2)) p))
                                    rowi rowj)))
                     (setf (row matrix j) new-row))))))
   matrix)

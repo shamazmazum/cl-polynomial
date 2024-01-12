@@ -9,7 +9,7 @@
                    (let ((status (run suite)))
                      (explain! status)
                      (results-status status)))
-                 '(algebra factor-finite))))
+                 '(algebra factor))))
 
 (defun coeffs-sorted-p (polynomial)
   (let* ((coeffs (p::polynomial-coeffs polynomial))
@@ -19,7 +19,8 @@
 (defun random-poly (max-coeff state &optional (max-degree 100))
   (p:list->polynomial
    (loop repeat (1+ (random max-degree state))
-         collect (random max-coeff state))))
+         collect (- (random max-coeff state)
+                    (if (= max-coeff 2) 0 (floor max-coeff 2))))))
 
 (defun random-prime (state)
   (let ((length (length +some-primes+)))
@@ -35,8 +36,8 @@
                (loop repeat m collect f))))
     factors)))
 
-(def-suite algebra       :description "Generic algebraic operations on polynomials")
-(def-suite factor-finite :description "Factorization of polynomials over finite fields")
+(def-suite algebra :description "Generic algebraic operations on polynomials")
+(def-suite factor  :description "Factorization of polynomials over finite fields")
 
 (in-suite algebra)
 
@@ -141,7 +142,7 @@
                                 prime)
                                gcd))))))
 
-(in-suite factor-finite)
+(in-suite factor)
 
 (test square-free
   (loop with state = (make-random-state t)
@@ -174,7 +175,7 @@
                                 polynomial prime)
                    rp)))))))
 
-(test factor
+(test factor-finite
   (loop with state = (make-random-state t)
         repeat 10000 do
         ;; The same comment as above
@@ -191,21 +192,22 @@
 (test lifting
   (loop with state = (make-random-state t)
         repeat 400000 do
-        (let ((poly (p:content-free (random-poly 20 state 10))))
+        (let* (;; Generate a random primitive polynomial
+               (poly (p:remove-content (random-poly 20 state 10)))
+               ;; Make sure that the leading coefficient is > 0
+               (poly (if (< (p:leading-coeff poly) 0) (p:negate poly) poly)))
           (unless (p:polynomial= poly p:+zero+)
-            (let ((prime (p:suitable-prime poly)))
-              (multiple-value-bind (factors mul)
-                  (p:factor (p:modulo poly prime) prime)
-                (when (and (= (length factors) 2))
-                  (destructuring-bind ((m1 . f1) (m2 . f2)) factors
-                    (when (= m1 m2 1)
-                      (let ((f1 (p::modulo-symmetric f1 prime))
-                            (f2 (p::modulo-symmetric (p:scale f2 mul) prime)))
-                        ;; This conditional is shit
-                        (when (and (> (p:leading-coeff f1) 0)
-                                   (> (p:leading-coeff f2) 0))
-                          (multiple-value-bind (f1zx f2zx convp steps)
-                              (p:lift-factors poly f1 f2 prime 200)
-                            (declare (ignore steps))
-                            (when convp
-                              (is (p:polynomial= poly (p:multiply f1zx f2zx))))))))))))))))
+            (let* ((prime (p:suitable-prime poly))
+                   ;; Constant multiplier in the factorization in
+                   ;; 𝔽_p[x] can be ignored.
+                   (factors (p:factor (p:modulo poly prime) prime)))
+              ;; For simplicity choose a situation with only 2 factors
+              (when (and (= (length factors) 2))
+                (destructuring-bind ((m1 . f1) (m2 . f2)) factors
+                  (when (= m1 m2 1)
+                    (multiple-value-bind (f1zx f2zx convp steps)
+                        (p:lift-factors poly f1 f2 prime 200)
+                      (declare (ignore steps))
+                      ;; When a factorization in ℤ[x] exists...
+                      (when convp
+                        (is (p:polynomial= poly (p:multiply f1zx f2zx)))))))))))))

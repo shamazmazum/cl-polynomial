@@ -22,6 +22,7 @@
            #:scale
            #:modulo
            #:invert-integer
+           #:mod-sym
            #:divide
            #:remainder
            #:monic-polynomial

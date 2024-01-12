@@ -17,7 +17,7 @@
 (sera:-> mod-sym (fixnum alex:positive-fixnum)
          (values fixnum &optional))
 (defun mod-sym (x n)
-  "Compute \\(x \\mod n\\). The result is in a range \\(0 \\dots 1\))
+  "Compute \\(x \\mod n\\). The result is in a range \\(0 \\dots 1\\)
 if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."
   (declare (optimize (speed 3)))
   (let ((mod (mod x n))

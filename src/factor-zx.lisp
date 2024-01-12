@@ -87,7 +87,7 @@ then the algorithm is not successful and \\(f = \\hat{f_1} \\hat{f_2}
          (values prime &optional))
 (defun suitable-prime (polynomial)
   "Return a suitable prime for reducing a factorization in
-\\(\\mathbb{Z}[x]\\) to a factorization in \\(mathbb{F}_p[x]\\)."
+\\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (assert (not (polynomial= polynomial +zero+)))
   ;; A suitable prime is the first prime which does not divide LC
   (let ((lc (leading-coeff polynomial)))

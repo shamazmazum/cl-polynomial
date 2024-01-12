@@ -51,7 +51,7 @@ index into the list corresponds with a power for that coefficient, e.g.:
 
 @begin[lang=lisp](code)
 CL-USER> (polynomial:list->polynomial '(1 2))
-2X^1 + X^0
+#<POLYNOMIAL:POLYNOMIAL 2X + 1>
 @end(code)"
   (polynomial
    (si:foldl
@@ -70,7 +70,7 @@ CL-USER> (polynomial:list->polynomial '(1 2))
 
 @begin[lang=lisp](code)
 CL-USER> (polynomial:sequence->polynomial #*101)
-X^2 + X^0
+#<POLYNOMIAL:POLYNOMIAL X^2 + 1>
 @end(code)"
   (list->polynomial (coerce seq 'list)))
 
@@ -182,7 +182,7 @@ This is @c(fmap) for a type @c(data Poly a b = Poly [(a, b)])."
 
 This is function is equivalent to
 @begin[lang=lisp](code)
-(alexandria:curry #'map-polynomial #'-)
+(alexandria:curry #'map-poly #'-)
 @end(code)"
   (map-poly #'- polynomial))
 

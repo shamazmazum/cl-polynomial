@@ -1,9 +1,10 @@
 (defpackage polynomial
   (:use #:cl)
   (:shadow #:gcd #:constantp)
-  (:local-nicknames (#:sera #:serapeum)
-                    (#:alex #:alexandria)
-                    (#:si   #:stateless-iterators))
+  (:local-nicknames (#:sera   #:serapeum)
+                    (#:alex   #:alexandria)
+                    (#:si     #:stateless-iterators)
+                    (#:primes #:cl-prime-maker))
   (:export #:polynomial
            #:polynomial=
            #:+zero+
@@ -32,4 +33,8 @@
            #:square-free
            #:reducing-polynomials
            #:irreduciblep
-           #:factor))
+           #:factor
+
+           #:lift-factors
+           #:content-free
+           #:suitable-prime))

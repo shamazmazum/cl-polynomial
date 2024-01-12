@@ -187,3 +187,25 @@
                                  (p:modulo (p:scale (ratsimp factors) c) prime)))
               (dolist (factor factors)
                 (is-true (p:irreduciblep (cdr factor) prime))))))))
+
+(test lifting
+  (loop with state = (make-random-state t)
+        repeat 400000 do
+        (let ((poly (p:content-free (random-poly 20 state 10))))
+          (unless (p:polynomial= poly p:+zero+)
+            (let ((prime (p:suitable-prime poly)))
+              (multiple-value-bind (factors mul)
+                  (p:factor (p:modulo poly prime) prime)
+                (when (and (= (length factors) 2))
+                  (destructuring-bind ((m1 . f1) (m2 . f2)) factors
+                    (when (= m1 m2 1)
+                      (let ((f1 (p::modulo-symmetric f1 prime))
+                            (f2 (p::modulo-symmetric (p:scale f2 mul) prime)))
+                        ;; This conditional is shit
+                        (when (and (> (p:leading-coeff f1) 0)
+                                   (> (p:leading-coeff f2) 0))
+                          (multiple-value-bind (f1zx f2zx convp steps)
+                              (p:lift-factors poly f1 f2 prime 200)
+                            (declare (ignore steps))
+                            (when convp
+                              (is (p:polynomial= poly (p:multiply f1zx f2zx))))))))))))))))

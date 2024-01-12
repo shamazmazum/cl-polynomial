@@ -7,7 +7,7 @@
     :serial t
     :pathname "src/"
     :components ((:file "package")
-                 (:file "types")
+                 (:file "util")
                  (:file "linalg")
                  (:file "polynomial")
                  (:file "factor")

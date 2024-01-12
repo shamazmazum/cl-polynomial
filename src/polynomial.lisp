@@ -229,16 +229,6 @@ This is function is equivalent to
   "Multiply a polynomial by a constant."
   (map-poly (lambda (a) (* a c)) polynomial))
 
-(sera:-> mod-sym (fixnum alex:positive-fixnum)
-         (values fixnum &optional))
-(defun mod-sym (x n)
-  (declare (optimize (speed 3)))
-  (let ((mod (mod x n))
-        (half (floor n 2)))
-    (if (or (= n 2)
-            (<= mod  half))
-        mod (- mod n))))
-
 (sera:-> modulo (polynomial alex:positive-fixnum)
          (values polynomial &optional))
 (defun modulo (polynomial n)
@@ -254,15 +244,6 @@ taken modulo @c(n)."
     (polynomial-coeffs polynomial)
     :from-end t
     :initial-value nil)))
-
-(sera:-> invert-integer (fixnum prime)
-         (values fixnum &optional))
-(defun invert-integer (n p)
-  "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{F}_p\\), p
-being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
-  ;; Remember that n^p = n
-  (declare (optimize (speed 3)))
-  (mod-sym (expt n (- p 2)) p))
 
 (sera:-> divide (polynomial polynomial prime)
          (values polynomial polynomial &optional))

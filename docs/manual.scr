@@ -29,6 +29,7 @@ CL-USER> (polynomial:factor * 2)
 @begin(section)
    @title(API)
    @cl:with-package[name="polynomial"](
+     @cl:doc(function mod-sym)
      @cl:doc(function list->polynomial)
      @cl:doc(function sequence->polynomial)
      @cl:doc(function polynomial->list)

@@ -62,11 +62,11 @@
         (let* ((prime (random-prime state))
                (poly1 (random-poly prime state))
                (poly2 (random-poly prime state))
-               (product (p:modulo (p:multiply poly1 poly2) prime)))
+               (product (fpx:modulo (p:multiply poly1 poly2) prime)))
           (is-true (coeffs-sorted-p product))
           (is (p:polynomial= (p:multiply poly1 p:+zero+) p:+zero+))
           (is (p:polynomial= (p:multiply poly1 p:+one+) poly1))
-          (is (p:polynomial= product (p:modulo (p:multiply poly2 poly1) prime)))
+          (is (p:polynomial= product (fpx:modulo (p:multiply poly2 poly1) prime)))
           (unless (or (p:polynomial= poly1 p:+zero+)
                       (p:polynomial= poly2 p:+zero+))
             (is (= (p:degree product)
@@ -74,7 +74,7 @@
                       (p:degree poly2)))))
           (unless (p:polynomial= poly1 p:+zero+)
             (multiple-value-bind (q r)
-                (p:divide product poly1 prime)
+                (fpx:divide product poly1 prime)
               (is (p:polynomial= q poly2))
               (is (p:polynomial= r p:+zero+)))))))
 
@@ -86,14 +86,14 @@
                (poly2 (random-poly prime state)))
           (unless (p:polynomial= poly2 p:+zero+)
             (multiple-value-bind (q r)
-                (p:divide poly1 poly2 prime)
+                (fpx:divide poly1 poly2 prime)
               (is-true (coeffs-sorted-p q))
               (is-true (coeffs-sorted-p r))
               (is-true (or (< (p:degree r) (p:degree poly2))
                            (= 0 (p:degree r) (p:degree poly2))))
               (is (p:polynomial=
                    poly1
-                   (p:modulo (p:add (p:multiply q poly2) r) prime))))))))
+                   (fpx:modulo (p:add (p:multiply q poly2) r) prime))))))))
 
 (test monic
   (loop with state = (make-random-state t)
@@ -102,12 +102,12 @@
                (poly (random-poly prime state)))
           (unless (p:polynomial= poly p:+zero+)
             (multiple-value-bind (monic c)
-                (p:monic-polynomial poly prime)
+                (fpx:monic-polynomial poly prime)
               (is-true (coeffs-sorted-p monic))
               (is (= (p:leading-coeff monic) 1))
               (is (p:polynomial=
                    poly
-                   (p:modulo (p:scale monic c) prime))))))))
+                   (fpx:modulo (p:scale monic c) prime))))))))
 
 (test gcd
   (loop with state = (make-random-state t)
@@ -117,15 +117,15 @@
                (poly2 (random-poly prime state)))
           (unless (or (p:polynomial= poly1 p:+zero+)
                       (p:polynomial= poly2 p:+zero+))
-            (let* ((gcd (p:gcd poly1 poly2 prime))
-                   (lcm (p:divide (p:modulo (p:multiply poly1 poly2) prime) gcd prime)))
-              (is (p:polynomial= gcd (p:gcd poly2 poly1 prime)))
+            (let* ((gcd (fpx:gcd poly1 poly2 prime))
+                   (lcm (fpx:divide (fpx:modulo (p:multiply poly1 poly2) prime) gcd prime)))
+              (is (p:polynomial= gcd (fpx:gcd poly2 poly1 prime)))
               (is-true (p:monicp gcd))
               (unless (p:constantp gcd)
-                (is (p:polynomial= (p:remainder poly1 gcd prime) p:+zero+))
-                (is (p:polynomial= (p:remainder poly2 gcd prime) p:+zero+))
-                (is (p:polynomial= (p:remainder lcm poly1 prime) p:+zero+))
-                (is (p:polynomial= (p:remainder lcm poly2 prime) p:+zero+))))))))
+                (is (p:polynomial= (fpx:remainder poly1 gcd prime) p:+zero+))
+                (is (p:polynomial= (fpx:remainder poly2 gcd prime) p:+zero+))
+                (is (p:polynomial= (fpx:remainder lcm poly1 prime) p:+zero+))
+                (is (p:polynomial= (fpx:remainder lcm poly2 prime) p:+zero+))))))))
 
 (test gcdex
   (loop with state = (make-random-state t)
@@ -134,9 +134,9 @@
                (poly1 (random-poly prime state))
                (poly2 (random-poly prime state)))
           (multiple-value-bind (gcd a b)
-              (p:gcdex poly1 poly2 prime)
-            (is (p:polynomial= gcd (p:gcd poly1 poly2 prime)))
-            (is (p:polynomial= (p:modulo
+              (fpx:gcdex poly1 poly2 prime)
+            (is (p:polynomial= gcd (fpx:gcd poly1 poly2 prime)))
+            (is (p:polynomial= (fpx:modulo
                                 (p:add (p:multiply poly1 a)
                                        (p:multiply poly2 b))
                                 prime)
@@ -151,10 +151,10 @@
         ;; to 2 or 3, so the result may have non-trivial factorization
         ;; with high amount of probability.
         (let* ((prime (+ 2 (random 2 state)))
-               (polynomial (p:monic-polynomial (random-poly prime state 20) prime)))
+               (polynomial (fpx:monic-polynomial (random-poly prime state 20) prime)))
           (unless (p:polynomial= polynomial p:+zero+)
             (is (p:polynomial=
-                 (p:modulo (ratsimp (ff:square-free polynomial prime)) prime)
+                 (fpx:modulo (ratsimp (fpx:square-free polynomial prime)) prime)
                  polynomial))))))
 
 (test reducing-polys
@@ -164,15 +164,15 @@
         ;; to 2 or 3, so the result may have non-trivial factorization
         ;; with high amount of probability.
         (let* ((prime (+ 2 (random 2 state)))
-               (polynomial (p:monic-polynomial (random-poly prime state 20) prime)))
+               (polynomial (fpx:monic-polynomial (random-poly prime state 20) prime)))
           (unless (zerop (p:degree polynomial))
-            (dolist (rp (ff:reducing-polynomials polynomial prime))
+            (dolist (rp (fpx:reducing-polynomials polynomial prime))
               (is (p:polynomial=
-                   (p:remainder (p:modulo
-                                 (apply #'p:multiply
-                                        (loop repeat prime collect rp))
-                                 prime)
-                                polynomial prime)
+                   (fpx:remainder (fpx:modulo
+                                   (apply #'p:multiply
+                                          (loop repeat prime collect rp))
+                                   prime)
+                                  polynomial prime)
                    rp)))))))
 
 (test factor-finite
@@ -180,33 +180,33 @@
         repeat 10000 do
         ;; The same comment as above
         (let* ((prime (+ 2 (random 2 state)))
-               (polynomial (p:monic-polynomial (random-poly prime state 20) prime)))
+               (polynomial (fpx:monic-polynomial (random-poly prime state 20) prime)))
           (unless (zerop (p:degree polynomial))
             (multiple-value-bind (factors c)
-                (ff:factor polynomial prime)
+                (fpx:factor polynomial prime)
               (is (p:polynomial= polynomial
-                                 (p:modulo (p:scale (ratsimp factors) c) prime)))
+                                 (fpx:modulo (p:scale (ratsimp factors) c) prime)))
               (dolist (factor factors)
-                (is-true (ff:irreduciblep (cdr factor) prime))))))))
+                (is-true (fpx:irreduciblep (cdr factor) prime))))))))
 
 (test lifting
   (loop with state = (make-random-state t)
         repeat 400000 do
         (let* (;; Generate a random primitive polynomial
-               (poly (fi:remove-content (random-poly 20 state 10)))
+               (poly (zx:remove-content (random-poly 20 state 10)))
                ;; Make sure that the leading coefficient is > 0
                (poly (if (< (p:leading-coeff poly) 0) (p:negate poly) poly)))
           (unless (p:polynomial= poly p:+zero+)
-            (let* ((prime (si:consume-one (fi:suitable-primes poly)))
+            (let* ((prime (si:consume-one (zx:suitable-primes poly)))
                    ;; Constant multiplier in the factorization in
                    ;; 𝔽_p[x] can be ignored.
-                   (factors (ff:factor (p:modulo poly prime) prime)))
+                   (factors (fpx:factor (fpx:modulo poly prime) prime)))
               ;; For simplicity choose a situation with only 2 factors
               (when (and (= (length factors) 2))
                 (destructuring-bind ((m1 . f1) (m2 . f2)) factors
                   (when (= m1 m2 1)
                     (multiple-value-bind (f1zx f2zx convp steps)
-                        (fi:lift-factors poly f1 f2 prime (fi:suitable-bound poly))
+                        (zx:lift-factors poly f1 f2 prime (zx:suitable-bound poly))
                       (declare (ignore steps))
                       ;; When a factorization in ℤ[x] exists...
                       (when convp

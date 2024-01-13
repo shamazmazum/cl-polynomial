@@ -1,6 +1,8 @@
+;; Polynomials and opeartions in R[x], R being a ring such as ℤ.
+
 (defpackage cl-polynomial/polynomial
   (:use #:cl)
-  (:shadow #:gcd #:constantp)
+  (:shadow #:constantp)
   (:local-nicknames (#:sera #:serapeum)
                     (#:alex #:alexandria)
                     (#:si   #:stateless-iterators)
@@ -21,14 +23,8 @@
            #:subtract
            #:multiply
            #:scale
-           #:modulo
-           #:divide
-           #:remainder
-           #:monic-polynomial
            #:monicp
            #:constantp
-           #:gcd
-           #:gcdex
            #:derivative))
 (in-package :cl-polynomial/polynomial)
 
@@ -260,153 +256,6 @@ This is function is equivalent to
 (defun scale (polynomial c)
   "Multiply a polynomial by a constant."
   (map-poly (lambda (a) (* a c)) polynomial))
-
-(sera:-> modulo (polynomial alex:positive-fixnum)
-         (values polynomial &optional))
-(defun modulo (polynomial n)
-  "Return a polynomial with every coefficient of @c(polynomial) being
-taken modulo @c(n)."
-  (polynomial
-   (reduce
-    (lambda (monomial acc)
-      (declare (type u:monomial monomial))
-      (destructuring-bind (d . c) monomial
-        (let ((c (u:mod-sym c n)))
-          (if (zerop c) acc (cons (cons d c) acc)))))
-    (polynomial-coeffs polynomial)
-    :from-end t
-    :initial-value nil)))
-
-(sera:-> divide (polynomial polynomial u:prime)
-         (values polynomial polynomial &optional))
-(defun divide (poly1 poly2 p)
-  "Calculate \\(p_1 / p_2\\) where \\(p_1, p_2 \\in
-\\mathbb{F}_p[x]\\), \\(p\\) being prime. A quotient and a remainder
-are returned as 2 values."
-  (let ((degree (degree poly2))
-        (i (u:invert-integer (leading-coeff poly2) p)))
-    (if (zerop degree)
-        ;; Division by a constant is a special case
-        (values
-         (modulo (scale poly1 i) p)
-         +zero+)
-        (labels ((division-step (quotient-coeffs remainder)
-                   (declare (type list quotient-coeffs)
-                            (type polynomial remainder))
-                   (if (< (degree remainder) degree)
-                       (values (polynomial (reverse quotient-coeffs))
-                               remainder)
-                       (let ((remainder-coeffs (polynomial-coeffs remainder)))
-                         (destructuring-bind (d . c) (car remainder-coeffs)
-                           (let* ((quotient-degree (- d degree))
-                                  (quotient-coeff (u:mod-sym (* c i) p))
-                                  (monomial (cons quotient-degree quotient-coeff)))
-                             (division-step
-                              (cons monomial quotient-coeffs)
-                              (modulo
-                               (subtract remainder
-                                         (multiply-monomial monomial poly2))
-                               p))))))))
-          (division-step nil poly1)))))
-
-(sera:-> remainder (polynomial polynomial u:prime)
-         (values polynomial &optional))
-(declaim (inline remainder))
-(defun remainder (poly1 poly2 p)
-  "Calculate a remainder of \\(p_1 / p_2\\) where \\(p_1, p_2 \\in
-\\mathbb{F}_p[x]\\), \\(p\\) being prime.
-
-This function returns the second value of @c(divide)."
-  (nth-value 1 (divide poly1 poly2 p)))
-
-(sera:-> monic-polynomial (polynomial u:prime)
-         (values polynomial fixnum &optional))
-(defun monic-polynomial (polynomial p)
-  "Factor an arbitrary non-zero polynomial in \\(\\mathbb{F}_p[x]\\),
-\\(p\\) being prime, into a monic polynomial and a constant factor."
-  (let ((c (leading-coeff polynomial)))
-    (values
-     (if (zerop c)
-         ;; This polynomial equals to 0
-         +zero+
-         (modulo
-          (scale polynomial (u:invert-integer c p)) p))
-     c)))
-
-(sera:-> positive-lc (polynomial)
-         (values polynomial &optional))
-(declaim (inline positive-lc))
-(defun positive-lc (polynomial)
-  (let ((lc (leading-coeff polynomial)))
-    (if (> lc 0) polynomial
-        (negate polynomial))))
-
-(sera:-> gcd (polynomial polynomial u:prime)
-         (values polynomial &optional))
-(defun gcd (poly1 poly2 p)
-  "Calculate the greatest common divisor of two polynomials in
-\\(\\mathbb{F}_p[x]\\), p being prime."
-  ;; Two first cases are special cases
-  ;; gcd(a, 0) = positive-lc(a) and
-  ;; gcd(0, a) = positive-lc(a) and
-  ;; gcd(0, 0) = 0
-  (positive-lc
-   (cond
-     ((polynomial= poly1 +zero+)
-      poly2)
-     ((polynomial= poly2 +zero+)
-      poly1)
-     (t
-      ;; The rest is the Euclidean algorithm
-      (let ((degree1 (degree poly1))
-            (degree2 (degree poly2)))
-        (labels ((%gcd (p1 p2)
-                   (let ((r (remainder p1 p2 p)))
-                     (if (polynomial= r +zero+)
-                         (nth-value 0 (monic-polynomial p2 p))
-                         (%gcd p2 r)))))
-          (if (> degree1 degree2)
-              (%gcd poly1 poly2)
-              (%gcd poly2 poly1))))))))
-
-(sera:-> gcdex (polynomial polynomial u:prime)
-         (values polynomial polynomial polynomial &optional))
-(defun gcdex (poly1 poly2 p)
-  "Find \\(\\gcd(p_1, p_2)\\), \\(p_1, p_2 \\in \\mathbb{F}_p[x]\\)
-and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
-\\gcd(p_1, p_2)\\) with minimal possible degree of \\(a\\) and
-\\(b\\)."
-  ;; POLY1 == 0 and/or POLY2 == 0 are special cases covered by COND
-  (cond
-    ((polynomial= poly1 +zero+)
-     (values (positive-lc poly2) +zero+
-             (scale +one+ (signum (leading-coeff poly2)))))
-    ((polynomial= poly2 +zero+)
-     (values (positive-lc poly1)
-             (scale +one+ (signum (leading-coeff poly1))) +zero+))
-    (t
-     ;; This is an extended Euclidean algorithm
-     (labels ((%gcd (p1 p2 s0 s1 d0 d1)
-                (multiple-value-bind (q r)
-                    (divide p1 p2 p)
-                  (let ((s (modulo (subtract s0 (multiply q s1)) p))
-                        (d (modulo (subtract d0 (multiply q d1)) p)))
-                    (if (polynomial= r +zero+)
-                        ;; Convert GCD to monic polynomial
-                        (multiple-value-bind (m s)
-                            (monic-polynomial p2 p)
-                          (let ((s^-1 (u:invert-integer s p)))
-                            (values
-                             (positive-lc m)
-                             (modulo (scale s1 s^-1) p)
-                             (modulo (scale d1 s^-1) p))))
-                        (%gcd p2 r s1 s d1 d))))))
-       (if (> (degree poly1)
-              (degree poly2))
-           (%gcd poly1 poly2 +one+ +zero+ +zero+ +one+)
-           (multiple-value-bind (gcd s d)
-               (%gcd poly2 poly1 +one+ +zero+ +zero+ +one+)
-             (values gcd d s)))))))
 
 (sera:-> derivative (polynomial)
          (values polynomial &optional))

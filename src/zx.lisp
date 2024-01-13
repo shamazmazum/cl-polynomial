@@ -1,4 +1,6 @@
-(defpackage cl-polynomial/factor-zx
+;; Operations and factorization in ℤ[x]
+
+(defpackage cl-polynomial/zx
   (:use #:cl)
   (:local-nicknames (#:sera   #:serapeum)
                     (#:alex   #:alexandria)
@@ -6,12 +8,12 @@
                     (#:primes #:cl-prime-maker)
                     (#:u      #:cl-polynomial/util)
                     (#:p      #:cl-polynomial/polynomial)
-                    (#:ff     #:cl-polynomial/factor))
+                    (#:fpx    #:cl-polynomial/fpx))
   (:export #:lift-factors
            #:remove-content
            #:suitable-primes
            #:suitable-bound))
-(in-package :cl-polynomial/factor-zx)
+(in-package :cl-polynomial/zx)
 
 (sera:-> remove-content (p:polynomial)
          (values p:polynomial fixnum &optional))
@@ -71,10 +73,10 @@ then the algorithm is not successful and \\(f = \\hat{f_1} \\hat{f_2}
          ;; Adjust f, f1 and f2 to correctly solve non-monic case
          ;; f ∈ ℤ[x], f₁, f₂ ∈ ℤ_p[x]
          (f  (identity (p:scale f  (* lc))))
-         (f1 (p:modulo (p:scale f1 (* lc (u:invert-integer (p:leading-coeff f1) p))) p))
-         (f2 (p:modulo (p:scale f2 (* lc (u:invert-integer (p:leading-coeff f2) p))) p)))
+         (f1 (fpx:modulo (p:scale f1 (* lc (u:invert-integer (p:leading-coeff f1) p))) p))
+         (f2 (fpx:modulo (p:scale f2 (* lc (u:invert-integer (p:leading-coeff f2) p))) p)))
     (multiple-value-bind (gcd s d)
-        (p:gcdex f1 f2 p)
+        (fpx:gcdex f1 f2 p)
       (declare (ignore gcd))
       (labels ((%lift-factors (%f1 %f2 q step)
                  (let* ((%f1 (replace-lc %f1 lc))
@@ -88,11 +90,11 @@ then the algorithm is not successful and \\(f = \\hat{f_1} \\hat{f_2}
                                (p:polynomial= diff p:+zero+)
                                step)
                        (let* ((rhs (p:map-poly (lambda (x) (/ x q)) diff))
-                              (%δf2 (p:modulo (p:multiply s rhs) p))
-                              (%δf1 (p:modulo (p:multiply d rhs) p)))
+                              (%δf2 (fpx:modulo (p:multiply s rhs) p))
+                              (%δf1 (fpx:modulo (p:multiply d rhs) p)))
                          (multiple-value-bind (quo δf2)
-                             (p:divide %δf2 %f2 p)
-                           (let ((δf1 (p:modulo (p:add (p:multiply %f1 quo) %δf1) p)))
+                             (fpx:divide %δf2 %f2 p)
+                           (let ((δf1 (fpx:modulo (p:add (p:multiply %f1 quo) %δf1) p)))
                              (%lift-factors (p:add %f1 (p:scale δf1 q))
                                             (p:add %f2 (p:scale δf2 q))
                                             (* p q)
@@ -129,8 +131,8 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (labels ((find-prime (primes-source)
              (multiple-value-bind (prime primes-source)
                  (si:consume-one primes-source)
-               (let* ((f (p:monic-polynomial (p:modulo polynomial prime) prime))
-                      (sf-factors (ff:square-free f prime)))
+               (let* ((f (fpx:monic-polynomial (fpx:modulo polynomial prime) prime))
+                      (sf-factors (fpx:square-free f prime)))
                  (if (and (= (length sf-factors) 1)
                           (= (caar sf-factors) 1))
                      (values prime f)
@@ -140,12 +142,12 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
     ;; prime.
     (multiple-value-bind (p f)
         (find-prime (suitable-primes polynomial))
-      (let ((factors (ff:berlekamp-factor f p))
+      (let ((factors (fpx:berlekamp-factor f p))
             (bound (suitable-bound polynomial)))
         (mapcar
          (lambda (f1)
            ;; KLUDGE: This seems to be inefficient. I just loose one of
            ;; lifted factors in this procedure.
-           (let ((f2 (p:modulo (apply #'p:multiply (remove f1 factors)) p)))
+           (let ((f2 (fpx:modulo (apply #'p:multiply (remove f1 factors)) p)))
              (lift-factors polynomial f1 f2 p bound)))
          factors)))))

@@ -14,8 +14,8 @@
                  :cl-polynomial/util
                  :cl-polynomial/linalg
                  :cl-polynomial/polynomial
-                 :cl-polynomial/factor
-                 :cl-polynomial/factor-zx)
+                 :cl-polynomial/fpx
+                 :cl-polynomial/zx)
     :in-order-to ((test-op (load-op "cl-polynomial/tests")))
     :perform (test-op (op system)
                       (declare (ignore op system))

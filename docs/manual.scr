@@ -8,36 +8,35 @@
 
    Few examples:
    @begin[lang=lisp](code)
-CL-USER> (polynomial:sequence->polynomial #*1110010101001)
-#<POLYNOMIAL:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1>
-CL-USER> (polynomial:factor * 11)
-((1 . #<POLYNOMIAL:POLYNOMIAL X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X + 9>)
- (1 . #<POLYNOMIAL:POLYNOMIAL X + 5>)
- (1 . #<POLYNOMIAL:POLYNOMIAL X^5 + 10X^3 + 1>))
-1
-
-CL-USER> (polynomial:list->polynomial '(1 0 1 1 0 0 1 0 1 1))
-#<POLYNOMIAL:POLYNOMIAL X^9 + X^8 + X^6 + X^3 + X^2 + 1>
-CL-USER> (polynomial:factor * 2)
-((1 . #<POLYNOMIAL:POLYNOMIAL X^3 + X^2 + 1>)
- (2 . #<POLYNOMIAL:POLYNOMIAL X^2 + X + 1>)
- (2 . #<POLYNOMIAL:POLYNOMIAL X + 1>))
+CL-USER> (defpackage example
+           (:use #:cl)
+           (:local-nicknames (#:p   #:cl-polynomial/polynomial)
+                             (#:fpx #:cl-polynomial/fpx)))
+#<PACKAGE "EXAMPLE">
+CL-USER> (in-package :example)
+#<PACKAGE "EXAMPLE">
+EXAMPLE> (p:sequence->polynomial #*1110010101001)
+#<P:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1>
+EXAMPLE> (fpx:factor * 11)
+((1 . #<P:POLYNOMIAL X^6 - 5X^5 + 4X^4 + 3X^3 - 3X^2 + 5X - 2>)
+ (1 . #<P:POLYNOMIAL X + 5>) (1 . #<P:POLYNOMIAL X^5 - X^3 + 1>))
 1
    @end(code)
 @end(section)
 
 @begin(section)
    @title(API)
+   A name of a package with described functions is given in parentheses.
    @begin(section)
-     @title(Utility functions)
-     @cl:with-package[name="polynomial"](
+     @title(Utility functions (@c(cl-polynomial/util)))
+     @cl:with-package[name="cl-polynomial/util"](
        @cl:doc(function mod-sym)
        @cl:doc(function invert-integer)
      )
    @end(section)
    @begin(section)
-     @title(Working with polynomials)
-     @cl:with-package[name="polynomial"](
+     @title(Basic operations on polynomials (@c(cl-polynomial/polynomial)))
+     @cl:with-package[name="cl-polynomial/polynomial"](
        @cl:doc(function list->polynomial)
        @cl:doc(function sequence->polynomial)
        @cl:doc(function polynomial->list)
@@ -53,31 +52,32 @@ CL-USER> (polynomial:factor * 2)
      )
    @end(section)
    @begin(section)
-     @title(Algebraic operations)
-     @cl:with-package[name="polynomial"](
+     @title(Algebraic operations for polynomials over a ring (@c(cl-polynomial/polynomial)))
+     @cl:with-package[name="cl-polynomial/polynomial"](
        @cl:doc(function negate)
        @cl:doc(function add)
        @cl:doc(function subtract)
        @cl:doc(function multiply)
        @cl:doc(function scale)
+     )
+   @end(section)
+   @begin(section)
+     @title(Division and factorization in \(\mathbb{F}_p[x]\) (@c(cl-polynomial/fpx)))
+     @cl:with-package[name="cl-polynomial/fpx"](
        @cl:doc(function modulo)
        @cl:doc(function divide)
        @cl:doc(function remainder)
        @cl:doc(function gcd)
        @cl:doc(function gcdex)
-     )
-   @end(section)
-   @begin(section)
-     @title(Factorization in \(\mathbb{F}_p[x]\))
-     @cl:with-package[name="polynomial"](
+
        @cl:doc(function square-free)
        @cl:doc(function reducing-polynomials)
        @cl:doc(function factor)
      )
    @end(section)
    @begin(section)
-     @title(Factorization in \(\mathbb{Z}[x]\))
-     @cl:with-package[name="polynomial"](
+     @title(Division and factorization in \(\mathbb{Z}[x]\) (@c(cl-polynomial/zx)))
+     @cl:with-package[name="cl-polynomial/zx"](
        @cl:doc(function suitable-primes)
        @cl:doc(function remove-content)
        @cl:doc(function lift-factors)

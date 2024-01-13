@@ -94,7 +94,7 @@ CL-USER> (polynomial:list->polynomial '(1 2))
 (sera:-> sequence->polynomial (sequence)
          (values polynomial &optional))
 (defun sequence->polynomial (seq)
-  "Like list->polynomial, but for all types of sequences.
+  "Like @c(list->polynomial), but for all types of sequences.
 
 @begin[lang=lisp](code)
 CL-USER> (polynomial:sequence->polynomial #*101)

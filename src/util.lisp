@@ -1,4 +1,15 @@
-(in-package :polynomial)
+(defpackage cl-polynomial/util
+  (:use #:cl)
+  (:local-nicknames (#:sera   #:serapeum)
+                    (#:alex   #:alexandria))
+  (:export #:matrix
+           #:row
+           #:prime
+           #:monomial
+
+           #:mod-sym
+           #:invert-integer))
+(in-package :cl-polynomial/util)
 
 ;; A type for matrices
 (deftype matrix () '(simple-array (signed-byte 32) (* *)))

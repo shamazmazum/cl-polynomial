@@ -1,4 +1,36 @@
-(in-package :polynomial)
+(defpackage cl-polynomial/polynomial
+  (:use #:cl)
+  (:shadow #:gcd #:constantp)
+  (:local-nicknames (#:sera #:serapeum)
+                    (#:alex #:alexandria)
+                    (#:si   #:stateless-iterators)
+                    (#:u    #:cl-polynomial/util))
+  (:export #:polynomial
+           #:polynomial=
+           #:+zero+
+           #:+one+
+           #:degree
+           #:polynomial-coeffs
+           #:leading-coeff
+           #:list->polynomial
+           #:sequence->polynomial
+           #:polynomial->list
+           #:map-poly
+           #:negate
+           #:add
+           #:subtract
+           #:multiply
+           #:scale
+           #:modulo
+           #:divide
+           #:remainder
+           #:monic-polynomial
+           #:monicp
+           #:constantp
+           #:gcd
+           #:gcdex
+           #:derivative))
+(in-package :cl-polynomial/polynomial)
 
 (defstruct polynomial
   (coeffs nil :type list :read-only t))
@@ -56,7 +88,7 @@ CL-USER> (polynomial:list->polynomial '(1 2))
   (polynomial
    (si:foldl
     (lambda (acc monomial)
-      (declare (type monomial monomial))
+      (declare (type u:monomial monomial))
       (destructuring-bind (degree . coeff) monomial
         (declare (ignore degree))
         (if (zerop coeff) acc (cons monomial acc))))
@@ -90,7 +122,7 @@ of @c(list->polynomial)."
 (defparameter +one+ (list->polynomial '(1))
   "Multiplicative identity")
 
-(sera:-> print-monomial (monomial boolean stream)
+(sera:-> print-monomial (u:monomial boolean stream)
          (values &optional))
 (defun print-monomial (monomial firstp stream)
   (destructuring-bind (degree . coeff) monomial
@@ -168,7 +200,7 @@ This is @c(fmap) for a type @c(data Poly a b = Poly [(a, b)])."
   (polynomial
    (mapcar
     (lambda (m)
-      (declare (type monomial m))
+      (declare (type u:monomial m))
       (destructuring-bind (d . c) m
         (cons d (funcall fn c))))
     (polynomial-coeffs polynomial))))
@@ -194,14 +226,14 @@ This is function is equivalent to
   (reduce #'%add (mapcar #'negate polynomials)
           :initial-value polynomial))
 
-(sera:-> multiply-monomial (monomial polynomial)
+(sera:-> multiply-monomial (u:monomial polynomial)
          (values polynomial &optional))
 (defun multiply-monomial (monomial polynomial)
   (destructuring-bind (d1 . c1) monomial
     (polynomial
      (mapcar
       (lambda (m)
-        (declare (type monomial m))
+        (declare (type u:monomial m))
         (destructuring-bind (d2 . c2) m
           (cons (+ d1 d2) (* c1 c2))))
       (polynomial-coeffs polynomial)))))
@@ -237,22 +269,22 @@ taken modulo @c(n)."
   (polynomial
    (reduce
     (lambda (monomial acc)
-      (declare (type monomial monomial))
+      (declare (type u:monomial monomial))
       (destructuring-bind (d . c) monomial
-        (let ((c (mod-sym c n)))
+        (let ((c (u:mod-sym c n)))
           (if (zerop c) acc (cons (cons d c) acc)))))
     (polynomial-coeffs polynomial)
     :from-end t
     :initial-value nil)))
 
-(sera:-> divide (polynomial polynomial prime)
+(sera:-> divide (polynomial polynomial u:prime)
          (values polynomial polynomial &optional))
 (defun divide (poly1 poly2 p)
   "Calculate \\(p_1 / p_2\\) where \\(p_1, p_2 \\in
 \\mathbb{F}_p[x]\\), \\(p\\) being prime. A quotient and a remainder
 are returned as 2 values."
   (let ((degree (degree poly2))
-        (i (invert-integer (leading-coeff poly2) p)))
+        (i (u:invert-integer (leading-coeff poly2) p)))
     (if (zerop degree)
         ;; Division by a constant is a special case
         (values
@@ -267,7 +299,7 @@ are returned as 2 values."
                        (let ((remainder-coeffs (polynomial-coeffs remainder)))
                          (destructuring-bind (d . c) (car remainder-coeffs)
                            (let* ((quotient-degree (- d degree))
-                                  (quotient-coeff (mod-sym (* c i) p))
+                                  (quotient-coeff (u:mod-sym (* c i) p))
                                   (monomial (cons quotient-degree quotient-coeff)))
                              (division-step
                               (cons monomial quotient-coeffs)
@@ -277,7 +309,7 @@ are returned as 2 values."
                                p))))))))
           (division-step nil poly1)))))
 
-(sera:-> remainder (polynomial polynomial prime)
+(sera:-> remainder (polynomial polynomial u:prime)
          (values polynomial &optional))
 (declaim (inline remainder))
 (defun remainder (poly1 poly2 p)
@@ -287,7 +319,7 @@ are returned as 2 values."
 This function returns the second value of @c(divide)."
   (nth-value 1 (divide poly1 poly2 p)))
 
-(sera:-> monic-polynomial (polynomial prime)
+(sera:-> monic-polynomial (polynomial u:prime)
          (values polynomial fixnum &optional))
 (defun monic-polynomial (polynomial p)
   "Factor an arbitrary non-zero polynomial in \\(\\mathbb{F}_p[x]\\),
@@ -298,7 +330,7 @@ This function returns the second value of @c(divide)."
          ;; This polynomial equals to 0
          +zero+
          (modulo
-          (scale polynomial (invert-integer c p)) p))
+          (scale polynomial (u:invert-integer c p)) p))
      c)))
 
 (sera:-> positive-lc (polynomial)
@@ -309,7 +341,7 @@ This function returns the second value of @c(divide)."
     (if (> lc 0) polynomial
         (negate polynomial))))
 
-(sera:-> gcd (polynomial polynomial prime)
+(sera:-> gcd (polynomial polynomial u:prime)
          (values polynomial &optional))
 (defun gcd (poly1 poly2 p)
   "Calculate the greatest common divisor of two polynomials in
@@ -337,7 +369,7 @@ This function returns the second value of @c(divide)."
               (%gcd poly1 poly2)
               (%gcd poly2 poly1))))))))
 
-(sera:-> gcdex (polynomial polynomial prime)
+(sera:-> gcdex (polynomial polynomial u:prime)
          (values polynomial polynomial polynomial &optional))
 (defun gcdex (poly1 poly2 p)
   "Find \\(\\gcd(p_1, p_2)\\), \\(p_1, p_2 \\in \\mathbb{F}_p[x]\\)
@@ -363,7 +395,7 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
                         ;; Convert GCD to monic polynomial
                         (multiple-value-bind (m s)
                             (monic-polynomial p2 p)
-                          (let ((s^-1 (invert-integer s p)))
+                          (let ((s^-1 (u:invert-integer s p)))
                             (values
                              (positive-lc m)
                              (modulo (scale s1 s^-1) p)
@@ -383,7 +415,7 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
   (polynomial
    (reduce
     (lambda (m acc)
-      (declare (type monomial m))
+      (declare (type u:monomial m))
       (destructuring-bind (d . c) m
         (if (zerop d) acc
             (cons

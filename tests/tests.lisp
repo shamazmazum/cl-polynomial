@@ -12,7 +12,7 @@
                  '(algebra factor))))
 
 (defun coeffs-sorted-p (polynomial)
-  (let* ((coeffs (p::polynomial-coeffs polynomial))
+  (let* ((coeffs (p:polynomial-coeffs polynomial))
          (sorted (sort (copy-seq coeffs) #'> :key #'car)))
     (equalp coeffs sorted)))
 
@@ -154,7 +154,7 @@
                (polynomial (p:monic-polynomial (random-poly prime state 20) prime)))
           (unless (p:polynomial= polynomial p:+zero+)
             (is (p:polynomial=
-                 (p:modulo (ratsimp (p:square-free polynomial prime)) prime)
+                 (p:modulo (ratsimp (ff:square-free polynomial prime)) prime)
                  polynomial))))))
 
 (test reducing-polys
@@ -166,7 +166,7 @@
         (let* ((prime (+ 2 (random 2 state)))
                (polynomial (p:monic-polynomial (random-poly prime state 20) prime)))
           (unless (zerop (p:degree polynomial))
-            (dolist (rp (p:reducing-polynomials polynomial prime))
+            (dolist (rp (ff:reducing-polynomials polynomial prime))
               (is (p:polynomial=
                    (p:remainder (p:modulo
                                  (apply #'p:multiply
@@ -183,30 +183,30 @@
                (polynomial (p:monic-polynomial (random-poly prime state 20) prime)))
           (unless (zerop (p:degree polynomial))
             (multiple-value-bind (factors c)
-                (p:factor polynomial prime)
+                (ff:factor polynomial prime)
               (is (p:polynomial= polynomial
                                  (p:modulo (p:scale (ratsimp factors) c) prime)))
               (dolist (factor factors)
-                (is-true (p:irreduciblep (cdr factor) prime))))))))
+                (is-true (ff:irreduciblep (cdr factor) prime))))))))
 
 (test lifting
   (loop with state = (make-random-state t)
         repeat 400000 do
         (let* (;; Generate a random primitive polynomial
-               (poly (p:remove-content (random-poly 20 state 10)))
+               (poly (fi:remove-content (random-poly 20 state 10)))
                ;; Make sure that the leading coefficient is > 0
                (poly (if (< (p:leading-coeff poly) 0) (p:negate poly) poly)))
           (unless (p:polynomial= poly p:+zero+)
-            (let* ((prime (si:consume-one (p:suitable-primes poly)))
+            (let* ((prime (si:consume-one (fi:suitable-primes poly)))
                    ;; Constant multiplier in the factorization in
                    ;; 𝔽_p[x] can be ignored.
-                   (factors (p:factor (p:modulo poly prime) prime)))
+                   (factors (ff:factor (p:modulo poly prime) prime)))
               ;; For simplicity choose a situation with only 2 factors
               (when (and (= (length factors) 2))
                 (destructuring-bind ((m1 . f1) (m2 . f2)) factors
                   (when (= m1 m2 1)
                     (multiple-value-bind (f1zx f2zx convp steps)
-                        (p:lift-factors poly f1 f2 prime (p:suitable-bound poly))
+                        (fi:lift-factors poly f1 f2 prime (fi:suitable-bound poly))
                       (declare (ignore steps))
                       ;; When a factorization in ℤ[x] exists...
                       (when convp

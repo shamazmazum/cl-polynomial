@@ -1,11 +1,17 @@
-(in-package :polynomial)
+(defpackage cl-polynomial/linalg
+  (:use #:cl)
+  (:local-nicknames (#:sera   #:serapeum)
+                    (#:alex   #:alexandria)
+                    (#:u      #:cl-polynomial/util))
+  (:export #:nullspace))
+(in-package :cl-polynomial/linalg)
 
 ;; Accessors for rows in a matrix (with additional start and stop indices).
-(sera:-> row (matrix alex:non-negative-fixnum
-                     &optional
-                     alex:non-negative-fixnum
-                     alex:non-negative-fixnum)
-         (values row &optional))
+(sera:-> row (u:matrix alex:non-negative-fixnum
+                       &optional
+                       alex:non-negative-fixnum
+                       alex:non-negative-fixnum)
+         (values u:row &optional))
 (defun row (matrix k &optional (start 0) (end (array-dimension matrix 1)))
   (declare (optimize (speed 3)))
   (loop with row = (make-array (- end start) :element-type '(signed-byte 32))
@@ -15,16 +21,16 @@
               (aref matrix k i))
         finally (return row)))
 
-(sera:-> (setf row) (row matrix alex:non-negative-fixnum)
-         (values row &optional))
+(sera:-> (setf row) (u:row u:matrix alex:non-negative-fixnum)
+         (values u:row &optional))
 (defun (setf row) (row matrix k)
   (declare (optimize (speed 3)))
   (dotimes (i (array-dimension matrix 1))
     (setf (aref matrix k i) (aref row i)))
   row)
 
-(sera:-> triangularize! (matrix prime)
-         (values matrix &optional))
+(sera:-> triangularize! (u:matrix u:prime)
+         (values u:matrix &optional))
 (defun triangularize! (matrix p)
   "Bring a matrix to an echelon form using row operations"
   (declare (optimize (speed 3)))
@@ -61,18 +67,18 @@
                   for rowj = (row matrix j)
                   for elt2 = (aref rowj leading-column)
                   when (not (zerop elt2)) do
-                  (let* ((mul (mod-sym (* (invert-integer elt2 p) elt1) p))
+                  (let* ((mul (u:mod-sym (* (u:invert-integer elt2 p) elt1) p))
                          (new-row (map-into
                                    rowj
                                    (lambda (x1 x2)
                                      (declare (type (signed-byte 32) x1 x2))
-                                     (mod-sym (- x1 (* mul x2)) p))
+                                     (u:mod-sym (- x1 (* mul x2)) p))
                                    rowi rowj)))
                     (setf (row matrix j) new-row))))))
   matrix)
 
-(sera:-> attach-identity (matrix)
-         (values matrix &optional))
+(sera:-> attach-identity (u:matrix)
+         (values u:matrix &optional))
 (defun attach-identity (matrix)
   "Attach an identity matrix to the right of a square matrix"
   (declare (optimize (speed 3)))
@@ -90,13 +96,13 @@
                         (t 0))))
           finally (return result))))
 
-(sera:-> %nullspace (matrix prime)
-         (values matrix &optional))
+(sera:-> %nullspace (u:matrix u:prime)
+         (values u:matrix &optional))
 (declaim (inline %nullspace))
 (defun %nullspace (matrix p)
   (triangularize! (attach-identity matrix) p))
 
-(sera:-> nullspace (matrix prime)
+(sera:-> nullspace (u:matrix u:prime)
          (values list &optional))
 (defun nullspace (m p)
   "Return a list of vectors which span ker(M^T) with elements in

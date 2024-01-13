@@ -1,20 +1,32 @@
-(in-package :polynomial)
+(defpackage cl-polynomial/factor
+  (:use #:cl)
+  (:local-nicknames (#:sera #:serapeum)
+                    (#:alex #:alexandria)
+                    (#:u    #:cl-polynomial/util)
+                    (#:p    #:cl-polynomial/polynomial)
+                    (#:la   #:cl-polynomial/linalg))
+  (:export #:square-free
+           #:berlekamp-factor
+           #:reducing-polynomials
+           #:irreduciblep
+           #:factor))
+(in-package :cl-polynomial/factor)
 
-(sera:-> x^pk-case (polynomial prime)
-         (values polynomial &optional))
+(sera:-> x^pk-case (p:polynomial u:prime)
+         (values p:polynomial &optional))
 (defun x^pk-case (poly p)
   "Replace a polynomial in the form \\(\\sum_k a_k x^{b_k p}\\) with
 \\(\\sum_k a_k x^{b_k}\\)."
-  (polynomial
+  (p:polynomial
    (mapcar
     (lambda (m)
-      (declare (type monomial m))
+      (declare (type u:monomial m))
       (destructuring-bind (d . c) m
         (assert (zerop (rem d p)))
         (cons (/ d p) c)))
-    (polynomial-coeffs poly))))
+    (p:polynomial-coeffs poly))))
 
-(sera:-> square-free (polynomial prime)
+(sera:-> square-free (p:polynomial u:prime)
          (values list &optional))
 (defun square-free (polynomial p)
   "Perform square-free factorization of a monic polynomial in
@@ -22,21 +34,21 @@
 tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
 \\(\\prod_i f_i^{d_i}\\)."
   (labels ((%%collect (p1 p2 acc n multiplicity)
-             (if (polynomial= p2 +one+)
+             (if (p:polynomial= p2 p:+one+)
                  (values acc p1)
-                 (let* ((gcd (gcd p1 p2 p))
-                        (%p1 (divide p1 gcd p))
-                        (%p2 (divide p2 gcd p)))
+                 (let* ((gcd (p:gcd p1 p2 p))
+                        (%p1 (p:divide p1 gcd p))
+                        (%p2 (p:divide p2 gcd p)))
                    (%%collect %p1 gcd
-                              (if (polynomial= %p2 +one+) acc
+                              (if (p:polynomial= %p2 p:+one+) acc
                                   (cons (cons (* n multiplicity) %p2) acc))
                               (1+ n) multiplicity))))
            (%collect (poly acc multiplicity)
-             (let* ((gcd (gcd poly (modulo (derivative poly) p) p))
-                    (w (divide poly gcd p)))
+             (let* ((gcd (p:gcd poly (p:modulo (p:derivative poly) p) p))
+                    (w (p:divide poly gcd p)))
                (multiple-value-bind (%acc rest)
                    (%%collect gcd w acc 1 multiplicity)
-                 (if (polynomial= rest +one+)
+                 (if (p:polynomial= rest p:+one+)
                      %acc
                      (%collect (x^pk-case rest p)
                                %acc (* multiplicity p)))))))
@@ -44,48 +56,48 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
      (%collect polynomial nil 1))))
 
 ;; I really don't know how to name it
-(sera:-> berlekamp-matrix (polynomial prime)
-         (values matrix &optional))
+(sera:-> berlekamp-matrix (p:polynomial u:prime)
+         (values u:matrix &optional))
 (defun berlekamp-matrix (poly p)
-  (let* ((degree (degree poly))
+  (let* ((degree (p:degree poly))
          (matrix (make-array (list degree degree)
                              :element-type '(signed-byte 32))))
     (dotimes (i degree)
-      (let ((x^n-mod-poly (remainder (polynomial (list (cons (* i p) 1))) poly p)))
+      (let ((x^n-mod-poly (p:remainder (p:polynomial (list (cons (* i p) 1))) poly p)))
         (dotimes (j degree)
           (setf (aref matrix i j)
                 (mod
-                 (- (or (cdr (assoc j (polynomial-coeffs x^n-mod-poly))) 0)
+                 (- (or (cdr (assoc j (p:polynomial-coeffs x^n-mod-poly))) 0)
                     (if (= i j) 1 0))
                  p)))))
     ;; The Berlekamp matrix + I has coefficients of polynomials x^{i
     ;; prime} mod polynomial for 0≤i<deg polynomial in its columns.
     matrix))
 
-(sera:-> reducing-polynomials (polynomial prime)
+(sera:-> reducing-polynomials (p:polynomial u:prime)
          (values list &optional))
 (defun reducing-polynomials (f p)
   "Return a list of all f-reducing polynomials for a monic non-constant
 square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
-  (let ((nullspace (nullspace (berlekamp-matrix f p) p)))
-    (mapcar #'sequence->polynomial nullspace)))
+  (let ((nullspace (la:nullspace (berlekamp-matrix f p) p)))
+    (mapcar #'p:sequence->polynomial nullspace)))
 
 ;; TODO: Generalize to all polynomials
-(sera:-> irreduciblep (polynomial prime)
+(sera:-> irreduciblep (p:polynomial u:prime)
          (values boolean &optional))
 (defun irreduciblep (f p)
   "Test if a monic non-constant square-free polynomial \\(f \\in
 \\mathbb{F}_p[x]\\) is irreducible."
-  (= (length (nullspace (berlekamp-matrix f p) p)) 1))
+  (= (length (la:nullspace (berlekamp-matrix f p) p)) 1))
 
 ;; TODO: This implementation does a lot of redundant work. Optimize it.
-(sera:-> berlekamp-factor (polynomial prime)
+(sera:-> berlekamp-factor (p:polynomial u:prime)
          (values list &optional))
 (defun berlekamp-factor (f p)
   "Given a monic square-free non-constant polynomial, return a list of its
 factors."
-  (let ((rps (remove +one+ (reducing-polynomials f p)
-                     :test #'polynomial=)))
+  (let ((rps (remove p:+one+ (reducing-polynomials f p)
+                     :test #'p:polynomial=)))
     (if (null rps)
         (list f)
         (labels ((collect-factors (g)
@@ -98,24 +110,27 @@ factors."
                                  (if (= n p) acc
                                      (add-factors
                                       (1+ n)
-                                      (let ((gcd
-                                             (gcd g (modulo (add rp (scale +one+ n)) p) p)))
-                                        (if (polynomial= gcd +one+) acc (cons gcd acc)))))))
+                                      (let ((gcd (p:gcd
+                                                  g (p:modulo
+                                                     (p:add rp (p:scale p:+one+ n)) p)
+                                                  p)))
+                                        (if (p:polynomial= gcd p:+one+) acc
+                                            (cons gcd acc)))))))
                         (add-factors 0 acc)))
                     rps
                     :initial-value nil))
                  (more-factors (factors)
                    ;; (MORE-FACTORS (COLLECT-FACTORS G)) return *all*
                    ;; non-trivial factors.
-                   (let* ((old-factors (remove-duplicates factors :test #'polynomial=))
+                   (let* ((old-factors (remove-duplicates factors :test #'p:polynomial=))
                           (new-factors (remove-duplicates
                                         (alex:flatten
                                          ;; Here we calculate some redundant GCDs because
                                          ;; gcd(f, gcd(f, g)) = gcd(f, g)
                                          (mapcar #'collect-factors old-factors))
-                                        :test #'polynomial=)))
+                                        :test #'p:polynomial=)))
                      ;; If there are nothing new, stop
-                     (if (null (set-difference new-factors old-factors :test #'polynomial=))
+                     (if (null (set-difference new-factors old-factors :test #'p:polynomial=))
                          new-factors
                          (more-factors new-factors)))))
           ;; Now we need to filter irreducible factors from this mess.
@@ -124,20 +139,20 @@ factors."
              (lambda (g)
                (some
                 (lambda (h)
-                  (let ((gcd (gcd h g p)))
+                  (let ((gcd (p:gcd h g p)))
                     (not
-                     (or (polynomial= gcd +one+)
-                         (polynomial= gcd g)))))
+                     (or (p:polynomial= gcd p:+one+)
+                         (p:polynomial= gcd g)))))
                 factors))
              factors))))))
 
 ;; TODO: Generalize to constant polynomials?
-(sera:-> factor (polynomial prime)
+(sera:-> factor (p:polynomial u:prime)
          (values list fixnum &optional))
 (defun factor (polynomial p)
   "Factor a non-constant polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
   (multiple-value-bind (monic m)
-      (monic-polynomial polynomial p)
+      (p:monic-polynomial polynomial p)
     (values
      (reduce #'append
              (mapcar

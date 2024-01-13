@@ -42,7 +42,7 @@
   <h1 class="doc-title">cl-polynomial</h1>
   <article id="article" data-section="api">
     <aside>
-      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="api.html#utility-functions" data-node="utility-functions">Utility functions</a></li><li><a href="api.html#working-with-polynomials" data-node="working-with-polynomials">Working with polynomials</a></li><li><a href="api.html#algebraic-operations" data-node="algebraic-operations">Algebraic operations</a></li><li><a href="api.html#factorization-in-\\-(-\\mathbb{f}_p[x]\\-)" data-node="factorization-in-\\-(-\\mathbb{f}_p[x]\\-)">Factorization in \(\mathbb{F}_p[x]\)</a></li><li><a href="api.html#factorization-in-\\-(-\\mathbb{z}[x]\\-)" data-node="factorization-in-\\-(-\\mathbb{z}[x]\\-)">Factorization in \(\mathbb{Z}[x]\)</a></li></ol></li></ol>
+      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="api.html#utility-functions--(-cl-polynomial-util-)" data-node="utility-functions--(-cl-polynomial-util-)">Utility functions (<code>cl-polynomial/util</code>)</a></li><li><a href="api.html#basic-operations-on-polynomials--(-cl-polynomial-polynomial-)" data-node="basic-operations-on-polynomials--(-cl-polynomial-polynomial-)">Basic operations on polynomials (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="api.html#algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)" data-node="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)">Algebraic operations for polynomials over a ring (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="api.html#division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)" data-node="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Division and factorization in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="api.html#division-and-factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)" data-node="division-and-factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Division and factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</a></li></ol></li></ol>
     </aside>
     <main class="codex-section">
       <header>
@@ -50,89 +50,54 @@
       </header>
       <div class="content">
         
-   <h1 id="utility-functions">Utility functions</h1>
+   A name of a package with described functions is given in parentheses.
+   <h1 id="utility-functions--(-cl-polynomial-util-)">Utility functions (<code>cl-polynomial/util</code>)</h1>
      
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">mod-sym</code><code class="codex-lambda-list">(x n)</code><div class="codex-docstring">Compute \(x \mod n\). The result is in a range \(0 \dots 1\)
-if \(n = 2\) or \(-(n-1)/2 \dots (n-1)/2\) if \(n &gt; 2\).</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">invert-integer</code><code class="codex-lambda-list">(n p)</code><div class="codex-docstring">Find a multiplicative inverse of \(n\) in \(\mathbb{F}_p\), p
-being prime, i.e. find \(x\) such that \(xn = nx = 1\).</div></div>
-     
-   
-   <h1 id="working-with-polynomials">Working with polynomials</h1>
-     
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">list-&gt;polynomial</code><code class="codex-lambda-list">(coeffs)</code><div class="codex-docstring">Given a list of integer coefficients convert it to a polynomial. An
-index into the list corresponds with a power for that coefficient, e.g.:<pre><code class="lisp">CL-USER&gt; (polynomial:list-&gt;polynomial '(1 2))
-#&lt;POLYNOMIAL:POLYNOMIAL 2X + 1&gt;
-</code></pre></div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">sequence-&gt;polynomial</code><code class="codex-lambda-list">(seq)</code><div class="codex-docstring">Like list-&gt;polynomial, but for all types of sequences.<pre><code class="lisp">CL-USER&gt; (polynomial:sequence-&gt;polynomial #*101)
-#&lt;POLYNOMIAL:POLYNOMIAL X^2 + 1&gt;
-</code></pre></div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial-&gt;list</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Convert a polynomial to a list of coefficients. This is an inverse
-of <code>list-&gt;polynomial</code>.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial=</code><code class="codex-lambda-list">(poly1 poly2)</code><div class="codex-docstring">Test if two polynomials are equal.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">degree</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return degree of a polynomial</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">leading-coeff</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return the leading coefficient of a polynomial</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">map-poly</code><code class="codex-lambda-list">(fn polynomial)</code><div class="codex-docstring"><p>Given a polynomial \(\sum_n a_n x^n\) return a polynomial
-\(\sum_n fn(a_n)x^n\).</p><p>This is <code>fmap</code> for a type <code>data Poly a b = Poly [(a, b)]</code>.</p></div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">derivative</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a formal derivative of a polynomial.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">monicp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial is monic</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">constantp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial has degree 0.</div></div>
-       <div class="codex-doc-node codex-variable"><code class="codex-name">+one+</code><div class="codex-docstring">Multiplicative identity</div></div>
-       <div class="codex-doc-node codex-variable"><code class="codex-name">+zero+</code><div class="codex-docstring">Additive identity</div></div>
+       <div class="codex-error codex-no-node">No node with name <code>mod-sym</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>invert-integer</code>.</div>
      
    
-   <h1 id="algebraic-operations">Algebraic operations</h1>
+   <h1 id="basic-operations-on-polynomials--(-cl-polynomial-polynomial-)">Basic operations on polynomials (<code>cl-polynomial/polynomial</code>)</h1>
      
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">negate</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring"><p>Given a polynomial \(\sum_n a_n x^n\) return a polynomial
-\(\sum_n -a_n x^n\).</p><p>This is function is equivalent to
-</p><pre><code class="lisp">(alexandria:curry #'map-poly #'-)
-</code></pre></div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">add</code><code class="codex-lambda-list">(&amp;rest polynomials)</code><div class="codex-docstring">Add polynomials together</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">subtract</code><code class="codex-lambda-list">(polynomial &amp;rest polynomials)</code><div class="codex-docstring">Subtract <code>polynomials</code> from <code>polynomial</code>.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">multiply</code><code class="codex-lambda-list">(&amp;rest polynomials)</code><div class="codex-docstring">Multiply polynomials</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">scale</code><code class="codex-lambda-list">(polynomial c)</code><div class="codex-docstring">Multiply a polynomial by a constant.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">modulo</code><code class="codex-lambda-list">(polynomial n)</code><div class="codex-docstring">Return a polynomial with every coefficient of <code>polynomial</code> being
-taken modulo <code>n</code>.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">divide</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Calculate \(p_1 / p_2\) where \(p_1, p_2 \in
-\mathbb{F}_p[x]\), \(p\) being prime. A quotient and a remainder
-are returned as 2 values.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">remainder</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring"><p>Calculate a remainder of \(p_1 / p_2\) where \(p_1, p_2 \in
-\mathbb{F}_p[x]\), \(p\) being prime.</p><p>This function returns the second value of <code>divide</code>.</p></div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcd</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Calculate the greatest common divisor of two polynomials in
-\(\mathbb{F}_p[x]\), p being prime.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcdex</code><code class="codex-lambda-list">(poly1 poly2 p)</code><div class="codex-docstring">Find \(\gcd(p_1, p_2)\), \(p_1, p_2 \in \mathbb{F}_p[x]\)
-and also find a solution of Bezout's equation \(a p_1 + b p_2 =
-\gcd(p_1, p_2)\) with minimal possible degree of \(a\) and
-\(b\).</div></div>
+       <div class="codex-error codex-no-node">No node with name <code>list-&gt;polynomial</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>sequence-&gt;polynomial</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>polynomial-&gt;list</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>polynomial=</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>degree</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>leading-coeff</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>map-poly</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>derivative</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>monicp</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>constantp</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>+one+</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>+zero+</code>.</div>
      
    
-   <h1 id="factorization-in-\\-(-\\mathbb{f}_p[x]\\-)">Factorization in \(\mathbb{F}_p[x]\)</h1>
+   <h1 id="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)">Algebraic operations for polynomials over a ring (<code>cl-polynomial/polynomial</code>)</h1>
      
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">square-free</code><code class="codex-lambda-list">(polynomial p)</code><div class="codex-docstring">Perform square-free factorization of a monic polynomial in
-\(\mathbb{F}_p[x]\), \(p\) being prime, with \(\deg f &gt; 0\). A list of
-tuples \((d_i . f_i)\) is returned, so the supplied polynomial is equal to
-\(\prod_i f_i^{d_i}\).</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">reducing-polynomials</code><code class="codex-lambda-list">(f p)</code><div class="codex-docstring">Return a list of all f-reducing polynomials for a monic non-constant
-square-free polynomial \(f \in \mathbb{F}_p[x]\).</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">factor</code><code class="codex-lambda-list">(polynomial p)</code><div class="codex-docstring">Factor a non-constant polynomial in \(\mathbb{F}_p[x]\) into irreducible factors.</div></div>
+       <div class="codex-error codex-no-node">No node with name <code>negate</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>add</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>subtract</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>multiply</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>scale</code>.</div>
      
    
-   <h1 id="factorization-in-\\-(-\\mathbb{z}[x]\\-)">Factorization in \(\mathbb{Z}[x]\)</h1>
+   <h1 id="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Division and factorization in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</h1>
+     <p>
+       <div class="codex-error codex-no-node">No node with name <code>modulo</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>divide</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>remainder</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>gcd</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>gcdex</code>.</div></p><p>       <div class="codex-error codex-no-node">No node with name <code>square-free</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>reducing-polynomials</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>factor</code>.</div>
+     </p>
+   
+   <h1 id="division-and-factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Division and factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</h1>
      
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">suitable-prime</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a suitable prime for reducing a factorization in
-\(\mathbb{Z}[x]\) to a factorization in \(\mathbb{F}_p[x]\).</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">remove-content</code><code class="codex-lambda-list">(f)</code><div class="codex-docstring">For polynomial \(f \in \mathbb{Z}[x]\) return its primitive
-part and content.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">lift-factors</code><code class="codex-lambda-list">(f f1 f2 p d)</code><div class="codex-docstring"><p>For a primitive polynomial \(f \in \mathbb{Z}[x]\) with leading
-coefficient &gt; 0 and \(f_1, f_2 \in \mathbb{Z}_p[x]\), \(p\)
-being prime, find polynomials \(\hat{f_1}, \hat{f_2} \in
-\mathbb{Z}[x]\) such that \(f = \hat{f_1} \hat{f_2}\) if \(f =
-f_1 f_2 \mod p\). \(d\) is a maximal absolute value of
-coefficients in \(f\) or its factors.</p><p>The first two values returned are the desired factors. The third value
-is a boolean being equal to <code>T</code> if the algorithm has successfully
-found a solution in \(\mathbb{Z}[x]\). If this value is <code>NIL</code>
-then the algorithm is not successful and \(f = \hat{f_1} \hat{f_2}
-\mod p^N\) where \(N\) is the forth returned value.</p></div></div>
+       <div class="codex-error codex-no-node">No node with name <code>suitable-primes</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>remove-content</code>.</div>
+       <div class="codex-error codex-no-node">No node with name <code>lift-factors</code>.</div>
      
    
 

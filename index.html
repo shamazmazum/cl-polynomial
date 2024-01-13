@@ -42,7 +42,7 @@
   <h1 class="doc-title">cl-polynomial</h1>
   <article id="article" data-section="index">
     <aside>
-      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="utility-functions.html" data-node="utility-functions">Utility functions</a></li><li><a href="working-with-polynomials.html" data-node="working-with-polynomials">Working with polynomials</a></li><li><a href="algebraic-operations.html" data-node="algebraic-operations">Algebraic operations</a></li><li><a href="factorization-in-\\-(-\\mathbb{f}_p[x]\\-).html" data-node="factorization-in-\\-(-\\mathbb{f}_p[x]\\-)">Factorization in \(\mathbb{F}_p[x]\)</a></li><li><a href="factorization-in-\\-(-\\mathbb{z}[x]\\-).html" data-node="factorization-in-\\-(-\\mathbb{z}[x]\\-)">Factorization in \(\mathbb{Z}[x]\)</a></li></ol></li></ol>
+      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="utility-functions--(-cl-polynomial-util-).html" data-node="utility-functions--(-cl-polynomial-util-)">Utility functions (<code>cl-polynomial/util</code>)</a></li><li><a href="basic-operations-on-polynomials--(-cl-polynomial-polynomial-).html" data-node="basic-operations-on-polynomials--(-cl-polynomial-polynomial-)">Basic operations on polynomials (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-).html" data-node="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)">Algebraic operations for polynomials over a ring (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-).html" data-node="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Division and factorization in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="division-and-factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-).html" data-node="division-and-factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Division and factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</a></li></ol></li></ol>
     </aside>
     <main class="codex-section">
       <header>
@@ -55,20 +55,18 @@
    functions require \(p\) as their last argument. No special tests are done
    to check if \(p\) is really a prime and behaviour is undefined if it is not
    (e.g. some functions can simply become non-terminating).</p><p>   Few examples:
-   </p><pre><code class="lisp">CL-USER&gt; (polynomial:sequence-&gt;polynomial #*1110010101001)
-#&lt;POLYNOMIAL:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1&gt;
-CL-USER&gt; (polynomial:factor * 11)
-((1 . #&lt;POLYNOMIAL:POLYNOMIAL X^6 + 6X^5 + 4X^4 + 3X^3 + 8X^2 + 5X + 9&gt;)
- (1 . #&lt;POLYNOMIAL:POLYNOMIAL X + 5&gt;)
- (1 . #&lt;POLYNOMIAL:POLYNOMIAL X^5 + 10X^3 + 1&gt;))
-1
-
-CL-USER&gt; (polynomial:list-&gt;polynomial '(1 0 1 1 0 0 1 0 1 1))
-#&lt;POLYNOMIAL:POLYNOMIAL X^9 + X^8 + X^6 + X^3 + X^2 + 1&gt;
-CL-USER&gt; (polynomial:factor * 2)
-((1 . #&lt;POLYNOMIAL:POLYNOMIAL X^3 + X^2 + 1&gt;)
- (2 . #&lt;POLYNOMIAL:POLYNOMIAL X^2 + X + 1&gt;)
- (2 . #&lt;POLYNOMIAL:POLYNOMIAL X + 1&gt;))
+   </p><pre><code class="lisp">CL-USER&gt; (defpackage example
+           (:use #:cl)
+           (:local-nicknames (#:p   #:cl-polynomial/polynomial)
+                             (#:fpx #:cl-polynomial/fpx)))
+#&lt;PACKAGE &quot;EXAMPLE&quot;&gt;
+CL-USER&gt; (in-package :example)
+#&lt;PACKAGE &quot;EXAMPLE&quot;&gt;
+EXAMPLE&gt; (p:sequence-&gt;polynomial #*1110010101001)
+#&lt;P:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1&gt;
+EXAMPLE&gt; (fpx:factor * 11)
+((1 . #&lt;P:POLYNOMIAL X^6 - 5X^5 + 4X^4 + 3X^3 - 3X^2 + 5X - 2&gt;)
+ (1 . #&lt;P:POLYNOMIAL X + 5&gt;)(1 . #&lt;P:POLYNOMIAL X^5 - X^3 + 1&gt;))
 1
    </code></pre><p>
 </p>

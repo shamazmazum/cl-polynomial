@@ -197,7 +197,7 @@
                ;; Make sure that the leading coefficient is > 0
                (poly (if (< (p:leading-coeff poly) 0) (p:negate poly) poly)))
           (unless (p:polynomial= poly p:+zero+)
-            (let* ((prime (p:suitable-prime poly))
+            (let* ((prime (si:consume-one (p:suitable-primes poly)))
                    ;; Constant multiplier in the factorization in
                    ;; 𝔽_p[x] can be ignored.
                    (factors (p:factor (p:modulo poly prime) prime)))
@@ -206,7 +206,7 @@
                 (destructuring-bind ((m1 . f1) (m2 . f2)) factors
                   (when (= m1 m2 1)
                     (multiple-value-bind (f1zx f2zx convp steps)
-                        (p:lift-factors poly f1 f2 prime 200)
+                        (p:lift-factors poly f1 f2 prime (p:suitable-bound poly))
                       (declare (ignore steps))
                       ;; When a factorization in ℤ[x] exists...
                       (when convp

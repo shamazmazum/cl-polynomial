@@ -38,4 +38,5 @@
 
            #:lift-factors
            #:remove-content
-           #:suitable-prime))
+           #:suitable-primes
+           #:suitable-bound))

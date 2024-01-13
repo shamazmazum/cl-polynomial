@@ -78,7 +78,7 @@ CL-USER> (polynomial:factor * 2)
    @begin(section)
      @title(Factorization in \(\mathbb{Z}[x]\))
      @cl:with-package[name="polynomial"](
-       @cl:doc(function suitable-prime)
+       @cl:doc(function suitable-primes)
        @cl:doc(function remove-content)
        @cl:doc(function lift-factors)
      )

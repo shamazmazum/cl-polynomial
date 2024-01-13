@@ -1,5 +1,6 @@
 (defpackage cl-polynomial/tests
   (:use #:cl #:fiveam)
   (:local-nicknames (#:p    #:polynomial)
-                    (#:alex #:alexandria))
+                    (#:alex #:alexandria)
+                    (#:si   #:stateless-iterators))
   (:export #:run-tests))

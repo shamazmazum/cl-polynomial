@@ -83,18 +83,53 @@ then the algorithm is not successful and \\(f = \\hat{f_1} \\hat{f_2}
                                             (1+ step)))))))))
         (%lift-factors f1 f2 p 0)))))
 
-(sera:-> suitable-prime (polynomial)
-         (values prime &optional))
-(defun suitable-prime (polynomial)
-  "Return a suitable prime for reducing a factorization in
-\\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
+(sera:-> suitable-primes (polynomial)
+         (values si:iterator &optional))
+(defun suitable-primes (polynomial)
+  "Return an iterator for suitable primes for reducing a factorization
+in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (assert (not (polynomial= polynomial +zero+)))
   ;; A suitable prime is the first prime which does not divide LC
   (let ((lc (leading-coeff polynomial)))
-    (nth-value
-     0 (si:consume-one
-        (si:drop-while
-         (lambda (prime) (zerop (rem lc prime)))
-         (si:imap
-          (lambda (n) (primes:get-nth-prime n))
-          (si:count-from 1)))))))
+    (si:drop-while
+     (lambda (prime) (zerop (rem lc prime)))
+     (si:imap
+      (lambda (n) (primes:get-nth-prime n))
+      (si:count-from 2)))))
+
+(sera:-> suitable-bound (polynomial)
+         (values alex:positive-fixnum &optional))
+(defun suitable-bound (polynomial)
+  (let ((degree (degree polynomial)))
+    (* (floor (sqrt (1+ degree)))
+       (expt 2 degree)
+       (reduce #'max (mapcar (alex:compose #'abs #'cdr)
+                             (polynomial-coeffs polynomial))))))
+
+(sera:-> possible-factors (polynomial)
+         (values list &optional))
+(defun possible-factors (polynomial)
+  ;; Polynomial must be content-free and square-free
+  (labels ((find-prime (primes-source)
+             (multiple-value-bind (prime primes-source)
+                 (si:consume-one primes-source)
+               (let* ((f (monic-polynomial (modulo polynomial prime) prime))
+                      (sf-factors (square-free f prime)))
+                 (if (and (= (length sf-factors) 1)
+                          (= (caar sf-factors) 1))
+                     (values prime f)
+                     (find-prime primes-source))))))
+    ;; Find a prime which gets a square-free factorization in the
+    ;; corresponding finite field and get POLYNOMIAL modulo that
+    ;; prime.
+    (multiple-value-bind (p f)
+        (find-prime (suitable-primes polynomial))
+      (let ((factors (berlekamp-factor f p))
+            (bound (suitable-bound polynomial)))
+        (mapcar
+         (lambda (f1)
+           ;; KLUDGE: This seems to be inefficient. I just loose one of
+           ;; lifted factors in this procedure.
+           (let ((f2 (modulo (apply #'multiply (remove f1 factors)) p)))
+             (lift-factors polynomial f1 f2 p bound)))
+         factors)))))

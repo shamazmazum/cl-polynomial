@@ -4,7 +4,6 @@
   (:use #:cl)
   (:shadow #:constantp)
   (:local-nicknames (#:sera #:serapeum)
-                    (#:alex #:alexandria)
                     (#:si   #:stateless-iterators)
                     (#:u    #:cl-polynomial/util))
   (:export #:polynomial
@@ -47,14 +46,14 @@
   (make-polynomial :coeffs list))
 
 (sera:-> degree (polynomial)
-         (values alex:non-negative-fixnum &optional))
+         (values (integer 0) &optional))
 (defun degree (polynomial)
   "Return degree of a polynomial"
   (let ((first (first (polynomial-coeffs polynomial))))
     (if first (car first) 0)))
 
 (sera:-> leading-coeff (polynomial)
-         (values fixnum &optional))
+         (values integer &optional))
 (defun leading-coeff (polynomial)
   "Return the leading coefficient of a polynomial"
   (let ((first (first (polynomial-coeffs polynomial))))
@@ -146,7 +145,6 @@ of @c(list->polynomial)."
 (sera:-> %add (polynomial polynomial)
          (values polynomial &optional))
 (defun %add (poly1 poly2)
-  (declare (optimize (speed 3)))
   ;; Polynomials coefficients are stored in a assoc list sorted by
   ;; power of X, so we need to compare heads of two lists when adding
   ;; two polynomials.
@@ -159,8 +157,8 @@ of @c(list->polynomial)."
                (t
                 (destructuring-bind ((d1 . c1) &rest rest1) ms1
                   (destructuring-bind ((d2 . c2) &rest rest2) ms2
-                    (declare (type alex:non-negative-fixnum d1 d2)
-                             (type fixnum c1 c2))
+                    (declare (type (integer 0) d1 d2)
+                             (type integer c1 c2))
                     (cond
                       ((> d1 d2)
                        (collect-coeffs (cons (cons d1 c1) acc)
@@ -187,7 +185,7 @@ of @c(list->polynomial)."
   "Add polynomials together"
   (reduce #'%add polynomials :initial-value +zero+))
 
-(sera:-> map-poly ((sera:-> (fixnum) (values fixnum &optional)) polynomial)
+(sera:-> map-poly ((sera:-> (integer) (values integer &optional)) polynomial)
          (values polynomial &optional))
 (defun map-poly (fn polynomial)
   "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
@@ -261,7 +259,7 @@ coefficient is positive."
   "Multiply polynomials"
   (reduce #'%multiply polynomials :initial-value +one+))
 
-(sera:-> scale (polynomial fixnum)
+(sera:-> scale (polynomial integer)
          (values polynomial &optional))
 (declaim (inline scale))
 (defun scale (polynomial c)

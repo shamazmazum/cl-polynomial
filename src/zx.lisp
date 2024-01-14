@@ -4,7 +4,6 @@
   (:use #:cl)
   (:shadow #:gcd)
   (:local-nicknames (#:sera   #:serapeum)
-                    (#:alex   #:alexandria)
                     (#:si     #:stateless-iterators)
                     (#:primes #:cl-prime-maker)
                     (#:u      #:cl-polynomial/util)
@@ -20,7 +19,7 @@
 (in-package :cl-polynomial/zx)
 
 (sera:-> remove-content (p:polynomial)
-         (values p:polynomial fixnum &optional))
+         (values p:polynomial integer &optional))
 (defun remove-content (f)
   "For polynomial \\(f \\in \\mathbb{Z}[x]\\) return its primitive
 part and content."
@@ -34,7 +33,7 @@ part and content."
      (p:map-poly (lambda (x) (/ x content)) f)
      content)))
 
-(sera:-> replace-lc (p:polynomial fixnum)
+(sera:-> replace-lc (p:polynomial integer)
          (values p:polynomial &optional))
 (defun replace-lc (f c)
   "Replace leading coefficient of non-zero @c(f) with @c(c)."
@@ -47,8 +46,8 @@ part and content."
          (cons (cons d c) rest)))))
 
 (sera:-> lift-factors
-         (p:polynomial p:polynomial p:polynomial u:prime alex:non-negative-fixnum)
-         (values p:polynomial p:polynomial boolean alex:non-negative-fixnum &optional))
+         (p:polynomial p:polynomial p:polynomial u:prime (integer 0))
+         (values p:polynomial p:polynomial boolean (integer 0) &optional))
 (defun lift-factors (f f1 f2 p d)
   "For a primitive polynomial \\(f \\in \\mathbb{Z}[x]\\) with leading
 coefficient > 0 and \\(f_1, f_2 \\in \\mathbb{Z}_p[x]\\), \\(p\\)
@@ -120,12 +119,12 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
       (si:count-from 2)))))
 
 (sera:-> suitable-bound (p:polynomial)
-         (values alex:positive-fixnum &optional))
+         (values (integer 1) &optional))
 (defun suitable-bound (polynomial)
   (let ((degree (p:degree polynomial)))
     (* (floor (sqrt (1+ degree)))
        (expt 2 degree)
-       (reduce #'max (mapcar (alex:compose #'abs #'cdr)
+       (reduce #'max (mapcar (lambda (x) (abs (cdr x)))
                              (p:polynomial-coeffs polynomial))))))
 
 (sera:-> possible-factors (p:polynomial)
@@ -158,7 +157,7 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
 
 ;; DIVIDE and GCD have their own versions for polynomials over
 ;; integers. DIVIDE can be used only for exact division externally.
-(sera:-> scale-divide (p:polynomial fixnum)
+(sera:-> scale-divide (p:polynomial integer)
          (values p:polynomial &optional))
 (declaim (inline scale-divide))
 (defun scale-divide (poly a)

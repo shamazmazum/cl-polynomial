@@ -24,7 +24,7 @@
 
 ;; OPERATIONS
 
-(sera:-> modulo (p:polynomial alex:positive-fixnum)
+(sera:-> modulo (p:polynomial (integer 1))
          (values p:polynomial &optional))
 (defun modulo (polynomial n)
   "Return a polynomial with every coefficient of @c(polynomial) being
@@ -83,7 +83,7 @@ This function returns the second value of @c(divide)."
   (nth-value 1 (divide poly1 poly2 p)))
 
 (sera:-> monic-polynomial (p:polynomial u:prime)
-         (values p:polynomial fixnum &optional))
+         (values p:polynomial integer &optional))
 (defun monic-polynomial (polynomial p)
   "Factor an arbitrary non-zero polynomial in \\(\\mathbb{F}_p[x]\\),
 \\(p\\) being prime, into a monic polynomial and a constant factor."
@@ -300,7 +300,7 @@ factors."
 
 ;; TODO: Generalize to constant polynomials?
 (sera:-> factor (p:polynomial u:prime)
-         (values list fixnum &optional))
+         (values list integer &optional))
 (defun factor (polynomial p)
   "Factor a non-constant polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
   (multiple-value-bind (monic m)

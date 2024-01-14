@@ -197,3 +197,38 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
 (declaim (inline remainder))
 (defun remainder (poly1 poly2)
   (nth-value 1 (divide poly1 poly2)))
+
+(sera:-> gcd-primitive (p:polynomial p:polynomial)
+         (values p:polynomial &optional))
+(defun gcd-primitive (poly1 poly2)
+  (p:positive-lc
+   (remove-content
+    (labels ((%gcd (f1 f2 &optional %d %γ %ψ contp)
+               (if (p:polynomial= f2 p:+zero+) f1
+                   (let* ((d (- (p:degree f1) (p:degree f2)))
+                          (γ (p:leading-coeff f2))
+                          (ψ (if contp (/ (expt (- %γ) %d)
+                                          (expt %ψ (1- %d)))
+                                 -1))
+                          (β (if contp (- (* %γ (expt ψ d)))
+                                 (expt -1 (1+ d)))))
+                     (%gcd
+                      f2 (p:map-poly (lambda (x) (/ x β))
+                                     (remainder (p:scale f1 (expt γ (1+ d))) f2))
+                      d γ ψ t)))))
+      (if (> (p:degree poly1)
+             (p:degree poly2))
+          (%gcd poly1 poly2)
+          (%gcd poly2 poly1))))))
+
+(sera:-> gcd (p:polynomial p:polynomial)
+         (values p:polynomial &optional))
+(defun gcd (poly1 poly2)
+  "Calculate GCD of two polynomials in \\(\\mathbb{Z}[x]\\)."
+  (multiple-value-bind (p1 c1)
+      (remove-content poly1)
+    (multiple-value-bind (p2 c2)
+        (remove-content poly2)
+      (p:scale
+       (gcd-primitive p1 p2)
+       (cl:gcd c1 c2)))))

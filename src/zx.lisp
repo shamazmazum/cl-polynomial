@@ -2,6 +2,7 @@
 
 (defpackage cl-polynomial/zx
   (:use #:cl)
+  (:shadow #:gcd)
   (:local-nicknames (#:sera   #:serapeum)
                     (#:alex   #:alexandria)
                     (#:si     #:stateless-iterators)
@@ -12,7 +13,10 @@
   (:export #:lift-factors
            #:remove-content
            #:suitable-primes
-           #:suitable-bound))
+           #:suitable-bound
+           #:divide
+           #:remainder
+           #:gcd))
 (in-package :cl-polynomial/zx)
 
 (sera:-> remove-content (p:polynomial)
@@ -23,7 +27,7 @@ part and content."
   (let ((content (reduce
                   (lambda (acc m)
                     (declare (type u:monomial m))
-                    (gcd acc (cdr m)))
+                    (cl:gcd acc (cdr m)))
                   (p:polynomial-coeffs f)
                   :initial-value 0)))
     (values
@@ -151,3 +155,46 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
            (let ((f2 (fpx:modulo (apply #'p:multiply (remove f1 factors)) p)))
              (lift-factors polynomial f1 f2 p bound)))
          factors)))))
+
+;; DIVIDE and GCD have their own versions for polynomials over
+;; integers. DIVIDE can be used only for exact division externally.
+(sera:-> scale-divide (p:polynomial fixnum)
+         (values p:polynomial &optional))
+(declaim (inline scale-divide))
+(defun scale-divide (poly a)
+  (p:map-poly (lambda (x) (/ x a)) poly))
+
+(sera:-> divide (p:polynomial p:polynomial)
+         (values p:polynomial p:polynomial &optional))
+(defun divide (poly1 poly2)
+  (let ((degree (p:degree poly2))
+        (lc (p:leading-coeff poly2)))
+    (if (zerop degree)
+        ;; Division by a constant is a special case
+        (values
+         (scale-divide poly1 lc)
+         p:+zero+)
+        (labels ((division-step (quotient-coeffs remainder)
+                   (declare (type list quotient-coeffs)
+                            (type p:polynomial remainder))
+                   (let* ((remainder-coeffs (p:polynomial-coeffs remainder))
+                          (d (caar remainder-coeffs))
+                          (c (cdar remainder-coeffs)))
+                     (if (or (< (p:degree remainder) degree)
+                             (not (zerop (rem c lc))))
+                         (values (p:polynomial (reverse quotient-coeffs))
+                                 remainder)
+                         (let* ((quotient-degree (- d degree))
+                                (quotient-coeff (/ c lc))
+                                (monomial (cons quotient-degree quotient-coeff)))
+                           (division-step
+                            (cons monomial quotient-coeffs)
+                            (p:subtract remainder
+                                        (p::multiply-monomial monomial poly2))))))))
+          (division-step nil poly1)))))
+
+(sera:-> remainder (p:polynomial p:polynomial)
+         (values p:polynomial &optional))
+(declaim (inline remainder))
+(defun remainder (poly1 poly2)
+  (nth-value 1 (divide poly1 poly2)))

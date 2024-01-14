@@ -96,14 +96,6 @@ This function returns the second value of @c(divide)."
           (p:scale polynomial (u:invert-integer c p)) p))
      c)))
 
-(sera:-> positive-lc (p:polynomial)
-         (values p:polynomial &optional))
-(declaim (inline positive-lc))
-(defun positive-lc (polynomial)
-  (let ((lc (p:leading-coeff polynomial)))
-    (if (> lc 0) polynomial
-        (p:negate polynomial))))
-
 (sera:-> gcd (p:polynomial p:polynomial u:prime)
          (values p:polynomial &optional))
 (defun gcd (poly1 poly2 p)
@@ -113,7 +105,7 @@ This function returns the second value of @c(divide)."
   ;; gcd(a, 0) = positive-lc(a) and
   ;; gcd(0, a) = positive-lc(a) and
   ;; gcd(0, 0) = 0
-  (positive-lc
+  (p:positive-lc
    (cond
      ((p:polynomial= poly1 p:+zero+)
       poly2)
@@ -142,10 +134,10 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
   ;; POLY1 == 0 and/or POLY2 == 0 are special cases covered by COND
   (cond
     ((p:polynomial= poly1 p:+zero+)
-     (values (positive-lc poly2) p:+zero+
+     (values (p:positive-lc poly2) p:+zero+
              (p:scale p:+one+ (signum (p:leading-coeff poly2)))))
     ((p:polynomial= poly2 p:+zero+)
-     (values (positive-lc poly1)
+     (values (p:positive-lc poly1)
              (p:scale p:+one+ (signum (p:leading-coeff poly1))) p:+zero+))
     (t
      ;; This is an extended Euclidean algorithm
@@ -160,7 +152,7 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
                             (monic-polynomial p2 p)
                           (let ((s^-1 (u:invert-integer s p)))
                             (values
-                             (positive-lc m)
+                             (p:positive-lc m)
                              (modulo (p:scale s1 s^-1) p)
                              (modulo (p:scale d1 s^-1) p))))
                         (%gcd p2 r s1 s d1 d))))))

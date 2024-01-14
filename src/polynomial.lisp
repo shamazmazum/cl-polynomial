@@ -17,6 +17,7 @@
            #:list->polynomial
            #:sequence->polynomial
            #:polynomial->list
+           #:positive-lc
            #:map-poly
            #:negate
            #:add
@@ -213,6 +214,16 @@ This is function is equivalent to
 (alexandria:curry #'map-poly #'-)
 @end(code)"
   (map-poly #'- polynomial))
+
+(sera:-> positive-lc (polynomial)
+         (values polynomial &optional))
+(declaim (inline positive-lc))
+(defun positive-lc (polynomial)
+  "Return @c(polynomial) or its negation, so that the leading
+coefficient is positive."
+  (let ((lc (leading-coeff polynomial)))
+    (if (> lc 0) polynomial
+        (negate polynomial))))
 
 (sera:-> subtract (polynomial &rest polynomial)
          (values polynomial &optional))

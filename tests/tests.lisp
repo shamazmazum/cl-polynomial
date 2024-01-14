@@ -142,6 +142,24 @@
                                 prime)
                                gcd))))))
 
+#|
+(test gcd-zx
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let ((poly1 (random-poly 2 state 50))
+              (poly2 (random-poly 2 state 50)))
+          (unless (or (p:polynomial= poly1 p:+zero+)
+                      (p:polynomial= poly2 p:+zero+))
+            (let* ((gcd (zx:gcd poly1 poly2))
+                   (lcm (zx:divide (p:multiply poly1 poly2) gcd)))
+              (is (p:polynomial= gcd (zx:gcd poly2 poly1)))
+              (unless (p:constantp gcd)
+                (is (p:polynomial= (zx:remainder poly1 gcd) p:+zero+))
+                (is (p:polynomial= (zx:remainder poly2 gcd) p:+zero+))
+                (is (p:polynomial= (zx:remainder lcm poly1) p:+zero+))
+                (is (p:polynomial= (zx:remainder lcm poly2) p:+zero+))))))))
+|#
+
 (in-suite factor)
 
 (test square-free

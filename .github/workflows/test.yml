@@ -20,4 +20,5 @@ jobs:
           echo '(load "'$GITHUB_WORKSPACE'/asdf.lisp")' > $HOME/.roswell/init.lisp
       - name: Run tests
         run: |
+          cat $GITHUB_WORKSPACE/tests/tests.lisp
           ros -l $GITHUB_WORKSPACE/tests/ci.lisp

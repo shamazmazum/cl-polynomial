@@ -17,12 +17,12 @@ jobs:
       - name: Get ASDF
         run: |
           ls -a $HOME
+          ls -a $HOME/lisp
+          ls -a $HOME/.roswell
           ls -a
           ls -a ..
           ls -a ../..
           wget https://common-lisp.net/project/asdf/archives/asdf.lisp
-          cat $GITHUB_WORKSPACE/asdf.lisp
-          cat $GITHUB_WORKSPACE/.sbclrc
           echo '(load $GITHUB_WORKSPACE/"asdf.lisp")' | cat - $GITHUB_WORKSPACE/.sbclrc > tmp
           mv tmp $GITHUB_WORKSPACE/.sbclrc
       - name: Run tests

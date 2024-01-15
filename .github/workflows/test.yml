@@ -17,6 +17,7 @@ jobs:
       - name: Get ASDF
         run: |
           curl https://common-lisp.net/project/asdf/archives/asdf.lisp -o $GITHUB_WORKSPACE/asdf.lisp
+          cat $GITHUB_WORKSPACE/asdf.lisp
           cat $GITHUB_WORKSPACE/.sbclrc
           echo '(load $GITHUB_WORKSPACE/"asdf.lisp")' | cat - $GITHUB_WORKSPACE/.sbclrc > tmp
           mv tmp $GITHUB_WORKSPACE/.sbclrc

@@ -4,6 +4,7 @@
   (:use #:cl)
   (:shadow #:constantp)
   (:local-nicknames (#:sera #:serapeum)
+                    (#:alex #:alexandria)
                     (#:si   #:stateless-iterators)
                     (#:u    #:cl-polynomial/util))
   (:export #:polynomial
@@ -46,7 +47,7 @@
   (make-polynomial :coeffs list))
 
 (sera:-> degree (polynomial)
-         (values (integer 0) &optional))
+         (values alex:non-negative-integer &optional))
 (defun degree (polynomial)
   "Return degree of a polynomial"
   (let ((first (first (polynomial-coeffs polynomial))))
@@ -148,6 +149,7 @@ of @c(list->polynomial)."
   ;; Polynomials coefficients are stored in a assoc list sorted by
   ;; power of X, so we need to compare heads of two lists when adding
   ;; two polynomials.
+  (declare (optimize (speed 3)))
   (labels ((collect-coeffs (acc ms1 ms2)
              (cond
                ((null ms1)
@@ -157,7 +159,7 @@ of @c(list->polynomial)."
                (t
                 (destructuring-bind ((d1 . c1) &rest rest1) ms1
                   (destructuring-bind ((d2 . c2) &rest rest2) ms2
-                    (declare (type (integer 0) d1 d2)
+                    (declare (type alex:non-negative-fixnum d1 d2)
                              (type integer c1 c2))
                     (cond
                       ((> d1 d2)
@@ -184,6 +186,13 @@ of @c(list->polynomial)."
 (defun add (&rest polynomials)
   "Add polynomials together"
   (reduce #'%add polynomials :initial-value +zero+))
+(define-compiler-macro add (&whole whole &rest polynomials)
+  (case (length polynomials)
+    (0 +zero+)
+    (1 (first polynomials))
+    (2 `(%add ,(first polynomials)
+              ,(second polynomials)))
+    (t whole)))
 
 (sera:-> map-poly ((sera:-> (integer) (values integer &optional)) polynomial)
          (values polynomial &optional))
@@ -230,6 +239,11 @@ coefficient is positive."
   "Subtract @c(polynomials) from @c(polynomial)."
   (reduce #'%add (mapcar #'negate polynomials)
           :initial-value polynomial))
+(define-compiler-macro subtract (&whole whole polynomial &rest polynomials)
+  (case (length polynomials)
+    (0 polynomial)
+    (1 `(%add ,polynomial (negate ,(first polynomials))))
+    (t whole)))
 
 (sera:-> multiply-monomial (u:monomial polynomial)
          (values polynomial &optional))
@@ -258,6 +272,13 @@ coefficient is positive."
 (defun multiply (&rest polynomials)
   "Multiply polynomials"
   (reduce #'%multiply polynomials :initial-value +one+))
+(define-compiler-macro multiply (&whole whole &rest polynomials)
+  (case (length polynomials)
+    (0 +one+)
+    (1 (first polynomials))
+    (2 `(%multiply ,(first polynomials)
+                   ,(second polynomials)))
+    (t whole)))
 
 (sera:-> scale (polynomial integer)
          (values polynomial &optional))

@@ -21,7 +21,7 @@
 (deftype prime () '(integer 2 #.most-positive-fixnum))
 
 ;; FIXME: let monomial be just an alias for a tuple?
-(deftype monomial () '(cons (integer 0) integer))
+(deftype monomial () '(cons alex:non-negative-fixnum integer))
 
 ;; Symmetric modulo operation widely used in cl-polynomial instead of
 ;; MOD.

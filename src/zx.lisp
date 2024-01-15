@@ -21,6 +21,12 @@
            #:irreduciblep))
 (in-package :cl-polynomial/zx)
 
+(sera:-> scale-divide (p:polynomial integer)
+         (values p:polynomial &optional))
+(declaim (inline scale-divide))
+(defun scale-divide (poly a)
+  (p:map-poly (lambda (x) (/ x a)) poly))
+
 (sera:-> remove-content (p:polynomial)
          (values p:polynomial integer &optional))
 (defun remove-content (f)
@@ -32,9 +38,7 @@ part and content."
                     (cl:gcd acc (cdr m)))
                   (p:polynomial-coeffs f)
                   :initial-value 0)))
-    (values
-     (p:map-poly (lambda (x) (/ x content)) f)
-     content)))
+    (values (scale-divide f content) content)))
 
 (sera:-> replace-lc (p:polynomial integer)
          (values p:polynomial &optional))
@@ -95,7 +99,7 @@ then the algorithm is not successful and \\(f = \\hat{f_1} \\hat{f_2}
                                (remove-content %f2)
                                (p:polynomial= diff p:+zero+)
                                step)
-                       (let* ((rhs (p:map-poly (lambda (x) (/ x q)) diff))
+                       (let* ((rhs (scale-divide diff q))
                               (%δf2 (fpx:modulo (p:multiply s rhs) p))
                               (%δf1 (fpx:modulo (p:multiply d rhs) p)))
                          (multiple-value-bind (quo δf2)
@@ -207,12 +211,6 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
 
 ;; DIVIDE and GCD have their own versions for polynomials over
 ;; integers. DIVIDE can be used only for exact division externally.
-(sera:-> scale-divide (p:polynomial integer)
-         (values p:polynomial &optional))
-(declaim (inline scale-divide))
-(defun scale-divide (poly a)
-  (p:map-poly (lambda (x) (/ x a)) poly))
-
 (sera:-> divide (p:polynomial p:polynomial)
          (values p:polynomial p:polynomial &optional))
 (defun divide (poly1 poly2)
@@ -263,8 +261,7 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
                           (β (if contp (- (* %γ (expt ψ d)))
                                  (expt -1 (1+ d)))))
                      (%gcd
-                      f2 (p:map-poly (lambda (x) (/ x β))
-                                     (remainder (p:scale f1 (expt γ (1+ d))) f2))
+                      f2 (scale-divide (remainder (p:scale f1 (expt γ (1+ d))) f2) β)
                       d γ ψ t)))))
       (if (> (p:degree poly1)
              (p:degree poly2))

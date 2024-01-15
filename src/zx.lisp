@@ -131,11 +131,26 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
        (reduce #'max (mapcar (lambda (x) (abs (cdr x)))
                              (p:polynomial-coeffs polynomial))))))
 
-(sera:-> possible-factors (p:polynomial)
+(sera:-> combinations (list (integer 0))
          (values list &optional))
-(defun possible-factors (polynomial)
+(defun combinations (list n)
+  (cond ((zerop n) (list nil))
+        ((null list) nil)
+        (t (append
+            (mapcar (lambda (comb)
+                      (cons (car list) comb))
+                    (combinations (cdr list) (1- n)))
+            (combinations (cdr list) n)))))
+
+(sera:-> factor-square-free (p:polynomial)
+         (values list &optional))
+(defun factor-square-free (polynomial)
   ;; Polynomial must be content-free and square-free
   (labels ((find-prime (primes-source)
+             ;; Find a suitable prime which does not divide the
+             ;; leading coefficient and provides a square-free
+             ;; factorization in a finite field (this factorization
+             ;; exists because POLYNOMIAL itself is square-free).
              (multiple-value-bind (prime primes-source)
                  (si:consume-one primes-source)
                (let* ((f (fpx:monic-polynomial (fpx:modulo polynomial prime) prime))
@@ -144,20 +159,51 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
                           (= (caar sf-factors) 1))
                      (values prime f)
                      (find-prime primes-source))))))
-    ;; Find a prime which gets a square-free factorization in the
-    ;; corresponding finite field and get POLYNOMIAL modulo that
-    ;; prime.
     (multiple-value-bind (p f)
         (find-prime (suitable-primes polynomial))
-      (let ((factors (fpx:berlekamp-factor f p))
-            (bound (suitable-bound polynomial)))
-        (mapcar
-         (lambda (f1)
-           ;; KLUDGE: This seems to be inefficient. I just loose one of
-           ;; lifted factors in this procedure.
-           (let ((f2 (fpx:modulo (apply #'p:multiply (remove f1 factors)) p)))
-             (lift-factors polynomial f1 f2 p bound)))
-         factors)))))
+      (let* ((factors-fpx (fpx:berlekamp-factor f p))
+             (bound (suitable-bound polynomial))
+             (length (length factors-fpx)))
+        (labels ((lift-factor (f1 f2)
+                   ;; KLUDGE: This seems to be inefficient. I just loose one of
+                   ;; lifted factors in this procedure.
+                   (lift-factors polynomial f1 f2 p bound))
+                 (try-combinations (f combs acc)
+                   ;; F ∈ ℤ[x]. Here COMBS is a list of pairs f₁, f₂ ∈
+                   ;; 𝔽_p[x] for which f₁f₂ = F holds. f₁, f₂ may be
+                   ;; irreducible factors of F or products of some
+                   ;; irreducible factors. I try to lift f₁ to ℤ[x]
+                   ;; and if a lifted polynomial divides POLYNOMIAL
+                   ;; add it to ACC.
+                   (if (null combs) (values f acc)
+                       (destructuring-bind ((f1 . f2) &rest rest) combs
+                         (let ((lifted (lift-factor f1 f2)))
+                           (multiple-value-bind (q r)
+                               (divide f lifted)
+                             (if (p:polynomial= r p:+zero+)
+                                 (try-combinations q rest (cons lifted acc))
+                                 (try-combinations f rest acc)))))))
+                 (recombine (f factors acc i)
+                   ;; F ∈ ℤ[x]. Generate combinations from factors of
+                   ;; F in 𝔽_p[x] (with 1, 2, …, LENGTH elements
+                   ;; without repetitions), multiply factors in each
+                   ;; combination and try the product as a factor of
+                   ;; F.
+                   (let ((combinations
+                          (mapcar (lambda (comb1)
+                                    (let ((comb2 (set-difference factors comb1
+                                                                 :test #'p:polynomial=)))
+                                      (cons (apply #'p:multiply comb1)
+                                            (apply #'p:multiply comb2))))
+                                  (combinations factors i))))
+                     (multiple-value-bind (f %acc)
+                         (try-combinations f combinations acc)
+                       (cond
+                         ((p:polynomial= f p:+one+) %acc)
+                         ((= i length)
+                          (cons (apply #'divide polynomial %acc) %acc))
+                         (t (recombine f factors %acc (1+ i))))))))
+          (recombine polynomial factors-fpx nil 1))))))
 
 ;; DIVIDE and GCD have their own versions for polynomials over
 ;; integers. DIVIDE can be used only for exact division externally.
@@ -260,45 +306,10 @@ multiplied by a second returned value."
         (values (remove 0 factors :key #'car)
                 (* cont (signum (p:leading-coeff polynomial))))))))
 
-(defun combinations (list n)
-  (cond ((zerop n) (list nil))
-        ((null list) nil)
-        (t (append
-            (mapcar (lambda (comb)
-                      (cons (car list) comb))
-                    (combinations (cdr list) (1- n)))
-            (combinations (cdr list) n)))))
-
-(sera:-> factor-square-free (p:polynomial)
-         (values list &optional))
-(defun factor-square-free (polynomial)
-  (let* ((possible-factors (possible-factors polynomial))
-         (length (length possible-factors)))
-    (labels ((try-combinations (f combs acc)
-               (if (null combs) (values f acc)
-                   (destructuring-bind (comb . rest) combs
-                     (multiple-value-bind (q r)
-                         (divide f comb)
-                       (if (p:polynomial= r p:+zero+)
-                           (try-combinations q rest (cons comb acc))
-                           (try-combinations f rest acc))))))
-             (recombine (f possible-factors factors i)
-               (let ((combinations
-                      (mapcar (lambda (comb)
-                                (apply #'p:multiply comb))
-                              (combinations possible-factors i))))
-                 (multiple-value-bind (f %factors)
-                     (try-combinations f combinations factors)
-                   (cond
-                     ((p:polynomial= f p:+one+) %factors)
-                     ((= i length)
-                      (cons (divide polynomial (apply #'p:multiply %factors)) %factors))
-                     (t (recombine f possible-factors %factors (1+ i))))))))
-      (recombine polynomial possible-factors nil 1))))
-
 (sera:-> factor (p:polynomial)
          (values list integer &optional))
 (defun factor (polynomial)
+  "Factor a polynomial in \\(\\mathbb{Z}[x]\\)."
   (if (p:polynomial= polynomial p:+zero+)
       (error "Cannot factor zero polynomial")
       (multiple-value-bind (f c)
@@ -318,6 +329,7 @@ multiplied by a second returned value."
 (sera:-> irreducible-p (p:polynomial)
          (values boolean &optional))
 (defun irreduciblep (polynomial)
+  "Test if polynomial is irreducible in \\(\\mathbb{Z}[x]\\)."
   (multiple-value-bind (p c)
       (remove-content polynomial)
     (if (= c 1)

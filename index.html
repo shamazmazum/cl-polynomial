@@ -51,10 +51,10 @@
       <div class="content">
         <p>
    <code>cl-polynomial</code> is a library for factoring polynomials in one variable over
-   finite fields with a prime number of elements \(p\). <b>NB:</b> Many provided
-   functions require \(p\) as their last argument. No special tests are done
-   to check if \(p\) is really a prime and behaviour is undefined if it is not
-   (e.g. some functions can simply become non-terminating).</p><p>   Few examples:
+   finite fields with a prime number of elements \(p\) or over integers. <b>NB:</b>
+   Many provided functions require \(p\) as their last argument. No special
+   tests are done to check if \(p\) is really a prime and behaviour is undefined
+   if it is not (e.g. some functions can simply become non-terminating).</p><p>   Few examples:
    </p><pre><code class="lisp">CL-USER&gt; (defpackage example
            (:use #:cl)
            (:local-nicknames (#:p   #:cl-polynomial/polynomial)

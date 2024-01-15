@@ -227,3 +227,16 @@
                       ;; When a factorization in ℤ[x] exists...
                       (when convp
                         (is (p:polynomial= poly (p:multiply f1zx f2zx)))))))))))))
+
+(test square-free-zx
+  (loop with state = (make-random-state t)
+        repeat 100000 do
+        ;; Generate a polynomial of relatively low degree to increase
+        ;; the probability of not being irreducible.
+        (let ((polynomial (random-poly 10 state 10)))
+          (unless (p:polynomial= polynomial p:+zero+)
+            (multiple-value-bind (factors c)
+                (zx:square-free polynomial)
+              (is (p:polynomial=
+                   (p:scale (ratsimp factors) c)
+                   polynomial)))))))

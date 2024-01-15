@@ -180,12 +180,12 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
     (p:polynomial-coeffs poly))))
 
 (sera:-> square-free (p:polynomial u:prime)
-         (values list &optional))
+         (values list integer &optional))
 (defun square-free (polynomial p)
-  "Perform square-free factorization of a monic polynomial in
+  "Perform square-free factorization of a polynomial in
 \\(\\mathbb{F}_p[x]\\), \\(p\\) being prime, with \\(\\deg f > 0\\). A list of
 tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
-\\(\\prod_i f_i^{d_i}\\)."
+\\(\\prod_i f_i^{d_i}\\) multiplied by the second returned value."
   (labels ((%%collect (p1 p2 acc n multiplicity)
              (if (p:polynomial= p2 p:+one+)
                  (values acc p1)
@@ -205,8 +205,9 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
                      %acc
                      (%collect (x^pk-case rest p)
                                %acc (* multiplicity p)))))))
-    (reverse
-     (%collect polynomial nil 1))))
+    (multiple-value-bind (monic m)
+        (monic-polynomial polynomial p)
+      (values (reverse (%collect monic nil 1)) m))))
 
 ;; I really don't know how to name it
 (sera:-> berlekamp-matrix (p:polynomial u:prime)
@@ -303,8 +304,8 @@ factors."
          (values list integer &optional))
 (defun factor (polynomial p)
   "Factor a non-constant polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
-  (multiple-value-bind (monic m)
-      (monic-polynomial polynomial p)
+  (multiple-value-bind (sqfr-factors m)
+      (square-free polynomial p)
     (values
      (reduce #'append
              (mapcar
@@ -314,5 +315,5 @@ factors."
                    (lambda (irreducible-factor)
                      (cons m irreducible-factor))
                    (berlekamp-factor f p))))
-              (square-free monic p)))
+              sqfr-factors))
      m)))

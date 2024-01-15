@@ -15,7 +15,8 @@
            #:suitable-bound
            #:divide
            #:remainder
-           #:gcd))
+           #:gcd
+           #:square-free))
 (in-package :cl-polynomial/zx)
 
 (sera:-> remove-content (p:polynomial)
@@ -232,3 +233,26 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
       (p:scale
        (gcd-primitive p1 p2)
        (cl:gcd c1 c2)))))
+
+(sera:-> square-free (p:polynomial)
+         (values list integer &optional))
+(defun square-free (polynomial)
+  "Perform square-free factorization for a polynomial \\(f \\in
+\\mathbb{Z}[x]\\). The first returned value is a list of tuples \\((d_i
+. f_i)\\), so the polynomial is equal to \\(\\sum_i f_i^{d_i}\\)
+multiplied by a second returned value."
+  (multiple-value-bind (f cont)
+      (remove-content (p:positive-lc polynomial))
+    (labels ((%square-free (b d acc deg)
+               (if (p:polynomial= b p:+one+) acc
+                   (let* ((gcd (gcd b d))
+                          (%b (divide b gcd))
+                          (c  (divide d gcd))
+                          (%d (p:subtract c (p:derivative %b))))
+                     (%square-free %b %d
+                                   (if (p:polynomial= gcd p:+one+) acc
+                                       (cons (cons deg gcd) acc))
+                                   (1+ deg))))))
+      (let ((factors (reverse (%square-free f (p:derivative f) nil 0))))
+        (values (remove 0 factors :key #'car)
+                (* cont (signum (p:leading-coeff polynomial))))))))

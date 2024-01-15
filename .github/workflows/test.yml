@@ -16,9 +16,9 @@ jobs:
           ros -e '(ql-dist:install-dist "http://dist.ultralisp.org/" :prompt nil)'
       - name: Get ASDF
         run: |
-          curl https://common-lisp.net/project/asdf/archives/asdf.lisp -O
+          curl https://common-lisp.net/project/asdf/archives/asdf.lisp -o $GITHUB_WORKSPACE/asdf.lisp
           cat $GITHUB_WORKSPACE/.sbclrc
-          echo '(load "asdf.lisp")' | cat - $GITHUB_WORKSPACE/.sbclrc > tmp
+          echo '(load $GITHUB_WORKSPACE/"asdf.lisp")' | cat - $GITHUB_WORKSPACE/.sbclrc > tmp
           mv tmp $GITHUB_WORKSPACE/.sbclrc
       - name: Run tests
         run: |

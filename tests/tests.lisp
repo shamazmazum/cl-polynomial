@@ -240,3 +240,17 @@
               (is (p:polynomial=
                    (p:scale (ratsimp factors) c)
                    polynomial)))))))
+
+(test factor-zx
+  (loop with state = (make-random-state t)
+        repeat 100000 do
+        ;; Generate a polynomial of relatively low degree to increase
+        ;; the probability of not being irreducible.
+        (let ((polynomial (random-poly 10 state 10)))
+          (unless (p:polynomial= polynomial p:+zero+)
+            (multiple-value-bind (factors c)
+                (zx:factor polynomial)
+              (is (p:polynomial=
+                   (p:scale (ratsimp factors) c)
+                   polynomial))
+              (is-true (every (alex:compose #'zx:irreduciblep #'cdr) factors)))))))

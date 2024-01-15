@@ -16,7 +16,9 @@
            #:divide
            #:remainder
            #:gcd
-           #:square-free))
+           #:square-free
+           #:factor
+           #:irreduciblep))
 (in-package :cl-polynomial/zx)
 
 (sera:-> remove-content (p:polynomial)
@@ -113,8 +115,9 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (assert (not (p:polynomial= polynomial p:+zero+)))
   ;; A suitable prime is the first prime which does not divide LC
   (let ((lc (p:leading-coeff polynomial)))
-    (si:drop-while
-     (lambda (prime) (zerop (rem lc prime)))
+    (si:filter
+     (lambda (prime)
+       (not (zerop (rem lc prime))))
      (si:imap
       (lambda (n) (primes:get-nth-prime n))
       (si:count-from 2)))))
@@ -256,3 +259,70 @@ multiplied by a second returned value."
       (let ((factors (reverse (%square-free f (p:derivative f) nil 0))))
         (values (remove 0 factors :key #'car)
                 (* cont (signum (p:leading-coeff polynomial))))))))
+
+(defun combinations (list n)
+  (cond ((zerop n) (list nil))
+        ((null list) nil)
+        (t (append
+            (mapcar (lambda (comb)
+                      (cons (car list) comb))
+                    (combinations (cdr list) (1- n)))
+            (combinations (cdr list) n)))))
+
+(sera:-> factor-square-free (p:polynomial)
+         (values list &optional))
+(defun factor-square-free (polynomial)
+  (let* ((possible-factors (possible-factors polynomial))
+         (length (length possible-factors)))
+    (labels ((try-combinations (f combs acc)
+               (if (null combs) (values f acc)
+                   (destructuring-bind (comb . rest) combs
+                     (multiple-value-bind (q r)
+                         (divide f comb)
+                       (if (p:polynomial= r p:+zero+)
+                           (try-combinations q rest (cons comb acc))
+                           (try-combinations f rest acc))))))
+             (recombine (f possible-factors factors i)
+               (let ((combinations
+                      (mapcar (lambda (comb)
+                                (apply #'p:multiply comb))
+                              (combinations possible-factors i))))
+                 (multiple-value-bind (f %factors)
+                     (try-combinations f combinations factors)
+                   (cond
+                     ((p:polynomial= f p:+one+) %factors)
+                     ((= i length)
+                      (cons (divide polynomial (apply #'p:multiply %factors)) %factors))
+                     (t (recombine f possible-factors %factors (1+ i))))))))
+      (recombine polynomial possible-factors nil 1))))
+
+(sera:-> factor (p:polynomial)
+         (values list integer &optional))
+(defun factor (polynomial)
+  (if (p:polynomial= polynomial p:+zero+)
+      (error "Cannot factor zero polynomial")
+      (multiple-value-bind (f c)
+          (square-free polynomial)
+        (values
+         (apply #'append
+                (mapcar
+                 (lambda (factor)
+                   (destructuring-bind (m . f) factor
+                     (mapcar
+                      (lambda (factor)
+                        (cons m factor))
+                      (factor-square-free f))))
+                 f))
+         c))))
+
+(sera:-> irreducible-p (p:polynomial)
+         (values boolean &optional))
+(defun irreduciblep (polynomial)
+  (multiple-value-bind (p c)
+      (remove-content polynomial)
+    (if (= c 1)
+        (destructuring-bind ((m . p) &rest rest)
+            (square-free p)
+          (and (null rest)
+               (= m 1)
+               (= (length (factor p)) 1))))))

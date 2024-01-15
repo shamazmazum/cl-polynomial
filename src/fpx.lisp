@@ -205,9 +205,11 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
                      %acc
                      (%collect (x^pk-case rest p)
                                %acc (* multiplicity p)))))))
-    (multiple-value-bind (monic m)
-        (monic-polynomial polynomial p)
-      (values (reverse (%collect monic nil 1)) m))))
+    (if (p:polynomial= polynomial p:+zero+)
+        (error "Cannot factor zero polynomial")
+        (multiple-value-bind (monic m)
+            (monic-polynomial polynomial p)
+          (values (reverse (%collect monic nil 1)) m)))))
 
 ;; I really don't know how to name it
 (sera:-> berlekamp-matrix (p:polynomial u:prime)
@@ -240,9 +242,14 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
 (sera:-> irreduciblep (p:polynomial u:prime)
          (values boolean &optional))
 (defun irreduciblep (f p)
-  "Test if a monic non-constant square-free polynomial \\(f \\in
-\\mathbb{F}_p[x]\\) is irreducible."
-  (= (length (la:nullspace (berlekamp-matrix f p) p)) 1))
+  "Test if a polynomial \\(f \\in \\mathbb{F}_p[x]\\) is irreducible."
+  (multiple-value-bind (factors c)
+      (square-free f p)
+    (declare (ignore c))
+    (if (= (length factors) 1)
+        (destructuring-bind (m . f) (car factors)
+          (and (= m 1)
+               (= (length (la:nullspace (berlekamp-matrix f p) p)) 1))))))
 
 ;; TODO: This implementation does a lot of redundant work. Optimize it.
 (sera:-> berlekamp-factor (p:polynomial u:prime)
@@ -303,7 +310,7 @@ factors."
 (sera:-> factor (p:polynomial u:prime)
          (values list integer &optional))
 (defun factor (polynomial p)
-  "Factor a non-constant polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
+  "Factor a polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
   (multiple-value-bind (sqfr-factors m)
       (square-free polynomial p)
     (values

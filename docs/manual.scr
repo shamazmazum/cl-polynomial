@@ -1,10 +1,10 @@
 @begin[ref=index](section)
    @title(Overview)
    @c(cl-polynomial) is a library for factoring polynomials in one variable over
-   finite fields with a prime number of elements \(p\). @b(NB:) Many provided
-   functions require \(p\) as their last argument. No special tests are done
-   to check if \(p\) is really a prime and behaviour is undefined if it is not
-   (e.g. some functions can simply become non-terminating).
+   finite fields with a prime number of elements \(p\) or over integers. @b(NB:)
+   Many provided functions require \(p\) as their last argument. No special
+   tests are done to check if \(p\) is really a prime and behaviour is undefined
+   if it is not (e.g. some functions can simply become non-terminating).
 
    Few examples:
    @begin[lang=lisp](code)

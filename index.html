@@ -58,6 +58,7 @@
    </p><pre><code class="lisp">CL-USER&gt; (defpackage example
            (:use #:cl)
            (:local-nicknames (#:p   #:cl-polynomial/polynomial)
+                             (#:zx  #:cl-polynomial/zx)
                              (#:fpx #:cl-polynomial/fpx)))
 #&lt;PACKAGE &quot;EXAMPLE&quot;&gt;
 CL-USER&gt; (in-package :example)
@@ -67,6 +68,12 @@ EXAMPLE&gt; (p:sequence-&gt;polynomial #*1110010101001)
 EXAMPLE&gt; (fpx:factor * 11)
 ((1 . #&lt;P:POLYNOMIAL X^6 - 5X^5 + 4X^4 + 3X^3 - 3X^2 + 5X - 2&gt;)
  (1 . #&lt;P:POLYNOMIAL X + 5&gt;)(1 . #&lt;P:POLYNOMIAL X^5 - X^3 + 1&gt;))
+1
+EXAMPLE&gt; (p:list-&gt;polynomial '(2 1 -1 -1 -4 -2 -2 1 1 2))
+#&lt;P:POLYNOMIAL 2X^9 + X^8 + X^7 - 2X^6 - 2X^5 - 4X^4 - X^3 - X^2 + X + 2&gt;
+EXAMPLE&gt; (zx:factor *)
+((1 . #&lt;P:POLYNOMIAL X^4 - X - 1&gt;)(1 . #&lt;P:POLYNOMIAL X^3 + X^2 - 1&gt;)
+ (1 . #&lt;P:POLYNOMIAL 2X^2 - X + 2&gt;))
 1
    </code></pre><p>
 </p>

@@ -165,49 +165,45 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
                      (find-prime primes-source))))))
     (multiple-value-bind (p f)
         (find-prime (suitable-primes polynomial))
-      (let* ((factors-fpx (fpx:berlekamp-factor f p))
-             (bound (suitable-bound polynomial))
-             (length (length factors-fpx)))
-        (labels ((lift-factor (f1 f2)
-                   ;; KLUDGE: This seems to be inefficient. I just loose one of
-                   ;; lifted factors in this procedure.
-                   (lift-factors polynomial f1 f2 p bound))
-                 (try-combinations (f combs acc)
-                   ;; F ∈ ℤ[x]. Here COMBS is a list of pairs f₁, f₂ ∈
-                   ;; 𝔽_p[x] for which f₁f₂ = F holds. f₁, f₂ may be
-                   ;; irreducible factors of F or products of some
-                   ;; irreducible factors. I try to lift f₁ to ℤ[x]
-                   ;; and if a lifted polynomial divides POLYNOMIAL
-                   ;; add it to ACC.
-                   (if (null combs) (values f acc)
-                       (destructuring-bind ((f1 . f2) &rest rest) combs
-                         (let ((lifted (lift-factor f1 f2)))
-                           (multiple-value-bind (q r)
-                               (divide f lifted)
-                             (if (p:polynomial= r p:+zero+)
-                                 (try-combinations q rest (cons lifted acc))
-                                 (try-combinations f rest acc)))))))
-                 (recombine (f factors acc i)
-                   ;; F ∈ ℤ[x]. Generate combinations from factors of
-                   ;; F in 𝔽_p[x] (with 1, 2, …, LENGTH elements
-                   ;; without repetitions), multiply factors in each
-                   ;; combination and try the product as a factor of
-                   ;; F.
-                   (let ((combinations
-                          (mapcar (lambda (comb1)
-                                    (let ((comb2 (set-difference factors comb1
-                                                                 :test #'p:polynomial=)))
-                                      (cons (apply #'p:multiply comb1)
-                                            (apply #'p:multiply comb2))))
-                                  (combinations factors i))))
-                     (multiple-value-bind (f %acc)
-                         (try-combinations f combinations acc)
-                       (cond
-                         ((p:polynomial= f p:+one+) %acc)
-                         ((= i length)
-                          (cons (apply #'divide polynomial %acc) %acc))
-                         (t (recombine f factors %acc (1+ i))))))))
-          (recombine polynomial factors-fpx nil 1))))))
+      (labels ((lift-factor (f f1 f2)
+                 (lift-factors f f1 f2 p (suitable-bound f)))
+               (try-combinations (f combs acc all-factors)
+                 ;; F ∈ ℤ[x]. Here ALL-FACTORS is a list of factors of F mod P and COMB
+                 ;; contain all combinations of N elements from ALL-FACTORS. For example,
+                 ;; F mod P factors like `abcd` and COMB contains combinations of 2
+                 ;; elements. Then COMB is equal to `((ab) (ac) (ad) (bc) (bd)
+                 ;; (cd))`. Each combination is lifted to ℤ[x] and tested if it divides
+                 ;; F. If it does, it is removed from ALL-FACTORS and RECOMBINE is called
+                 ;; again with F/∏COMB and ALL-FACTORS \ COMB.  This function does not
+                 ;; return anything useful because RECOMBINE jumps directly to the end of
+                 ;; FACTOR-SQUARE-FREE.
+                 (when combs
+                   (let* ((c1 (car combs))
+                          (c2 (set-difference all-factors c1 :test #'p:polynomial=))
+                          (f1 (apply #'p:multiply c1))
+                          (f2 (apply #'p:multiply c2)))
+                     (multiple-value-bind (f1l f2l convp)
+                         (lift-factor f f1 f2)
+                       (if convp
+                           (recombine f2l c2 (cons f1l acc) (length c1))
+                           (try-combinations f (cdr combs) acc all-factors))))))
+               (recombine (f factors acc i)
+                 ;; F ∈ ℤ[x]. Generate combinations from factors of F mod P and try to
+                 ;; lift these combinations to factors of F.  For example, suppose F mod P
+                 ;; factors as abcd, where a,b,c and d ∈ 𝔽_p[x].  Firstly combinations (a)
+                 ;; (b) (c) and (d) are constructed and we try to lift them to factors of
+                 ;; F. If we are not successful, combinations (ab) (ac) ... (cd) are
+                 ;; constructed and one of these combinations can be lifted to a factor of
+                 ;; F.
+                 (try-combinations f (combinations factors i) acc factors)
+                 (if (or (p:polynomial= f p:+one+)
+                         (= i (length factors)))
+                     (return-from factor-square-free acc)
+                     (recombine f factors acc (1+ i)))))
+        (or
+         (recombine polynomial (fpx:berlekamp-factor f p) nil 1)
+         ;; POLYNOMIAL is irreducible
+         (values (list polynomial)))))))
 
 ;; DIVIDE and GCD have their own versions for polynomials over
 ;; integers. DIVIDE can be used only for exact division externally.

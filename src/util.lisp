@@ -8,7 +8,8 @@
            #:monomial
 
            #:mod-sym
-           #:invert-integer))
+           #:invert-integer
+           #:bind-monomial))
 (in-package :cl-polynomial/util)
 
 ;; A type for matrices
@@ -43,3 +44,12 @@ if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."
 being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
   ;; Remember that n^p = n
   (mod-sym (expt n (- p 2)) p))
+
+;; Like destructuring-bind, but without additional checks
+(defmacro bind-monomial ((deg coeff) monomial &body body)
+  (let ((m (gensym)))
+    `(let ((,m ,monomial))
+       (declare (type monomial ,m))
+       (let ((,deg   (car ,m))
+             (,coeff (cdr ,m)))
+         ,@body))))

@@ -32,8 +32,7 @@ taken modulo @c(n)."
   (p:polynomial
    (reduce
     (lambda (monomial acc)
-      (declare (type u:monomial monomial))
-      (destructuring-bind (d . c) monomial
+      (u:bind-monomial (d c) monomial
         (let ((c (u:mod-sym c n)))
           (if (zerop c) acc (cons (cons d c) acc)))))
     (p:polynomial-coeffs polynomial)
@@ -60,7 +59,7 @@ are returned as 2 values."
                        (values (p:polynomial (reverse quotient-coeffs))
                                remainder)
                        (let ((remainder-coeffs (p:polynomial-coeffs remainder)))
-                         (destructuring-bind (d . c) (car remainder-coeffs)
+                         (u:bind-monomial (d c) (car remainder-coeffs)
                            (let* ((quotient-degree (- d degree))
                                   (quotient-coeff (u:mod-sym (* c i) p))
                                   (monomial (cons quotient-degree quotient-coeff)))
@@ -174,8 +173,7 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
    (mapcar
     (lambda (m)
       (declare (type u:monomial m))
-      (destructuring-bind (d . c) m
-        (assert (zerop (rem d p)))
+      (u:bind-monomial (d c) m
         (cons (/ d p) c)))
     (p:polynomial-coeffs poly))))
 
@@ -238,7 +236,6 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
   (let ((nullspace (la:nullspace (berlekamp-matrix f p) p)))
     (mapcar #'p:sequence->polynomial nullspace)))
 
-;; TODO: Generalize to all polynomials
 (sera:-> irreduciblep (p:polynomial u:prime)
          (values boolean &optional))
 (defun irreduciblep (f p)

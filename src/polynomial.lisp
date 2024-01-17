@@ -86,7 +86,7 @@ CL-USER> (polynomial:list->polynomial '(1 2))
    (si:foldl
     (lambda (acc monomial)
       (declare (type u:monomial monomial))
-      (destructuring-bind (degree . coeff) monomial
+      (u:bind-monomial (degree coeff) monomial
         (declare (ignore degree))
         (if (zerop coeff) acc (cons monomial acc))))
     nil
@@ -122,7 +122,7 @@ of @c(list->polynomial)."
 (sera:-> print-monomial (u:monomial boolean stream)
          (values &optional))
 (defun print-monomial (monomial firstp stream)
-  (destructuring-bind (degree . coeff) monomial
+  (u:bind-monomial (degree coeff) monomial
     (unless (zerop coeff)
       (if firstp
           (when (< coeff 0) (princ "- " stream))
@@ -157,22 +157,20 @@ of @c(list->polynomial)."
                ((null ms2)
                 (append (reverse ms1) acc))
                (t
-                (destructuring-bind ((d1 . c1) &rest rest1) ms1
-                  (destructuring-bind ((d2 . c2) &rest rest2) ms2
-                    (declare (type alex:non-negative-fixnum d1 d2)
-                             (type integer c1 c2))
+                (u:bind-monomial (d1 c1) (car ms1)
+                  (u:bind-monomial (d2 c2) (car ms2)
                     (cond
                       ((> d1 d2)
                        (collect-coeffs (cons (cons d1 c1) acc)
-                                       rest1 ms2))
+                                       (cdr ms1) ms2))
                       ((> d2 d1)
                        (collect-coeffs (cons (cons d2 c2) acc)
-                                       rest2 ms1))
+                                       (cdr ms2) ms1))
                       (t
                        (let ((sum (+ c1 c2)))
                          (collect-coeffs (if (zerop sum)
                                              acc (cons (cons d1 (+ c1 c2)) acc))
-                                         rest1 rest2))))))))))
+                                         (cdr ms1) (cdr ms2)))))))))))
     (polynomial
      (reverse
       (collect-coeffs
@@ -201,11 +199,11 @@ of @c(list->polynomial)."
 \\(\\sum_n fn(a_n)x^n\\).
 
 This is @c(fmap) for a type @c(data Poly a b = Poly [(a, b)])."
+  (declare (optimize (speed 3)))
   (polynomial
    (mapcar
     (lambda (m)
-      (declare (type u:monomial m))
-      (destructuring-bind (d . c) m
+      (u:bind-monomial (d c) m
         (cons d (funcall fn c))))
     (polynomial-coeffs polynomial))))
 
@@ -248,12 +246,11 @@ coefficient is positive."
 (sera:-> multiply-monomial (u:monomial polynomial)
          (values polynomial &optional))
 (defun multiply-monomial (monomial polynomial)
-  (destructuring-bind (d1 . c1) monomial
+  (u:bind-monomial (d1 c1) monomial
     (polynomial
      (mapcar
       (lambda (m)
-        (declare (type u:monomial m))
-        (destructuring-bind (d2 . c2) m
+        (u:bind-monomial (d2 c2) m
           (cons (+ d1 d2) (* c1 c2))))
       (polynomial-coeffs polynomial)))))
 
@@ -294,8 +291,7 @@ coefficient is positive."
   (polynomial
    (reduce
     (lambda (m acc)
-      (declare (type u:monomial m))
-      (destructuring-bind (d . c) m
+      (u:bind-monomial (d  c) m
         (if (zerop d) acc
             (cons
              (cons (1- d) (* d c))

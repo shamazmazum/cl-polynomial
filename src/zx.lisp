@@ -200,10 +200,7 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
                          (= i (length factors)))
                      (return-from factor-square-free acc)
                      (recombine f factors acc (1+ i)))))
-        (or
-         (recombine polynomial (fpx:berlekamp-factor f p) nil 1)
-         ;; POLYNOMIAL is irreducible
-         (values (list polynomial)))))))
+        (recombine polynomial (fpx:berlekamp-factor f p) nil 1)))))
 
 ;; DIVIDE and GCD have their own versions for polynomials over
 ;; integers. DIVIDE can be used only for exact division externally.

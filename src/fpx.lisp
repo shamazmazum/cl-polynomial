@@ -24,7 +24,7 @@
 
 ;; OPERATIONS
 
-(sera:-> modulo (p:polynomial (integer 1))
+(sera:-> modulo (p:polynomial u:prime)
          (values p:polynomial &optional))
 (defun modulo (polynomial n)
   "Return a polynomial with every coefficient of @c(polynomial) being

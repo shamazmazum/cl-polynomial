@@ -311,13 +311,12 @@ factors."
   (multiple-value-bind (sqfr-factors m)
       (square-free polynomial p)
     (values
-     (reduce #'append
-             (mapcar
-              (lambda (factor)
-                (destructuring-bind (m . f) factor
-                  (mapcar
-                   (lambda (irreducible-factor)
-                     (cons m irreducible-factor))
-                   (berlekamp-factor f p))))
-              sqfr-factors))
+     (reduce #'append sqfr-factors
+             :key
+             (lambda (factor)
+               (destructuring-bind (m . f) factor
+                 (mapcar
+                  (lambda (irreducible-factor)
+                    (cons m irreducible-factor))
+                  (berlekamp-factor f p)))))
      m)))

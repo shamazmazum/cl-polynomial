@@ -132,8 +132,8 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (let ((degree (p:degree polynomial)))
     (* (floor (sqrt (1+ degree)))
        (expt 2 degree)
-       (reduce #'max (mapcar (lambda (x) (abs (cdr x)))
-                             (p:polynomial-coeffs polynomial))))))
+       (reduce #'max (p:polynomial-coeffs polynomial)
+               :key (lambda (x) (abs (cdr x)))))))
 
 (sera:-> combinations (list (integer 0))
          (values list &optional))
@@ -305,15 +305,14 @@ multiplied by a second returned value."
       (multiple-value-bind (f c)
           (square-free polynomial)
         (values
-         (apply #'append
-                (mapcar
+         (reduce #'append f
+                 :key
                  (lambda (factor)
                    (destructuring-bind (m . f) factor
                      (mapcar
                       (lambda (factor)
                         (cons m factor))
-                      (factor-square-free f))))
-                 f))
+                      (factor-square-free f)))))
          c))))
 
 (sera:-> irreducible-p (p:polynomial)

@@ -235,7 +235,8 @@ coefficient is positive."
 (declaim (inline subtract))
 (defun subtract (polynomial &rest polynomials)
   "Subtract @c(polynomials) from @c(polynomial)."
-  (reduce #'%add (mapcar #'negate polynomials)
+  (reduce #'%add polynomials
+          :key #'negate
           :initial-value polynomial))
 (define-compiler-macro subtract (&whole whole polynomial &rest polynomials)
   (case (length polynomials)

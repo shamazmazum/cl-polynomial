@@ -26,15 +26,16 @@
 
 ;; Symmetric modulo operation widely used in cl-polynomial instead of
 ;; MOD.
-(sera:-> mod-sym (integer (integer 1))
+(sera:-> mod-sym (integer prime)
          (values integer &optional))
 (defun mod-sym (x n)
   "Compute \\(x \\mod n\\). The result is in a range \\(0 \\dots 1\\)
 if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."
+  (declare (optimize (speed 3)))
   (let ((mod (mod x n))
         (half (floor n 2)))
     (if (or (= n 2)
-            (<= mod  half))
+            (<= mod half))
         mod (- mod n))))
 
 (sera:-> invert-integer (integer prime)

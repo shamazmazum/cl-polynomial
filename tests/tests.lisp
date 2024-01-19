@@ -218,7 +218,7 @@
                    ;; 𝔽_p[x] can be ignored.
                    (factors (fpx:factor (fpx:modulo poly prime) prime)))
               ;; For simplicity choose a situation with only 2 factors
-              (when (and (= (length factors) 2))
+              (when (= (length factors) 2)
                 (destructuring-bind ((m1 . f1) (m2 . f2)) factors
                   (when (= m1 m2 1)
                     (multiple-value-bind (f1zx f2zx convp steps)

@@ -202,11 +202,16 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
                      %acc
                      (%collect (x^pk-case rest p)
                                %acc (* multiplicity p)))))))
-    (if (p:polynomial= polynomial p:+zero+)
-        (error "Cannot factor zero polynomial")
-        (multiple-value-bind (monic m)
-            (monic-polynomial polynomial p)
-          (values (reverse (%collect monic nil 1)) m)))))
+    (cond
+      ((p:polynomial= polynomial p:+zero+)
+       (error "Cannot factor zero polynomial"))
+      ((= (p:degree polynomial) 0)
+       (values (list (cons 1 p:+one+))
+               (p:leading-coeff polynomial)))
+      (t
+       (multiple-value-bind (monic m)
+           (monic-polynomial polynomial p)
+         (values (%collect monic nil 1) m))))))
 
 ;; I really don't know how to name it
 (sera:-> berlekamp-matrix (p:polynomial u:prime)

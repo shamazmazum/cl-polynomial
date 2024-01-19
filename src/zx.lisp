@@ -292,9 +292,16 @@ multiplied by a second returned value."
                                    (if (p:polynomial= gcd p:+one+) acc
                                        (cons (cons deg gcd) acc))
                                    (1+ deg))))))
-      (let ((factors (reverse (%square-free f (p:derivative f) nil 0))))
-        (values (remove 0 factors :key #'car)
-                (* cont (signum (p:leading-coeff polynomial))))))))
+      (cond
+        ((p:polynomial= polynomial p:+zero+)
+         (error "Cannot factor zero polynomial"))
+        ((= (p:degree polynomial) 0)
+         (values (list (cons 1 p:+one+))
+                 (p:leading-coeff polynomial)))
+        (t
+         (let ((factors (%square-free f (p:derivative f) nil 0)))
+           (values (remove 0 factors :key #'car)
+                   (* cont (signum (p:leading-coeff polynomial))))))))))
 
 (sera:-> factor (p:polynomial)
          (values list integer &optional))

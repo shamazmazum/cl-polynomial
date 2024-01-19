@@ -157,11 +157,10 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
              ;; exists because POLYNOMIAL itself is square-free).
              (multiple-value-bind (prime primes-source)
                  (si:consume-one primes-source)
-               (let* ((f (fpx:monic-polynomial (fpx:modulo polynomial prime) prime))
-                      (sf-factors (fpx:square-free f prime)))
+               (let ((sf-factors (fpx:square-free (fpx:modulo polynomial prime) prime)))
                  (if (and (= (length sf-factors) 1)
                           (= (caar sf-factors) 1))
-                     (values prime f)
+                     (values prime (cdar sf-factors))
                      (find-prime primes-source))))))
     (multiple-value-bind (p f)
         (find-prime (suitable-primes polynomial))

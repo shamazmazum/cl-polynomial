@@ -4,7 +4,6 @@
   (:use #:cl)
   (:shadow #:gcd)
   (:local-nicknames (#:sera #:serapeum)
-                    (#:alex #:alexandria)
                     (#:u    #:cl-polynomial/util)
                     (#:p    #:cl-polynomial/polynomial)
                     (#:la   #:cl-polynomial/linalg))
@@ -281,10 +280,9 @@ factors."
                    ;; non-trivial factors.
                    (let* ((old-factors (remove-duplicates factors :test #'p:polynomial=))
                           (new-factors (remove-duplicates
-                                        (alex:flatten
-                                         ;; Here we calculate some redundant GCDs because
-                                         ;; gcd(f, gcd(f, g)) = gcd(f, g)
-                                         (mapcar #'collect-factors old-factors))
+                                        ;; Here we calculate some redundant GCDs because
+                                        ;; gcd(f, gcd(f, g)) = gcd(f, g)
+                                        (reduce #'append old-factors :key #'collect-factors)
                                         :test #'p:polynomial=)))
                      ;; If there are nothing new, stop
                      (if (null (set-difference new-factors old-factors :test #'p:polynomial=))

@@ -252,59 +252,54 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
           (and (= m 1)
                (= (length (la:nullspace (berlekamp-matrix f p) p)) 1))))))
 
-;; TODO: This implementation does a lot of redundant work. Optimize it.
 (sera:-> berlekamp-factor (p:polynomial u:prime)
          (values list &optional))
 (defun berlekamp-factor (f p)
   "Given a monic square-free non-constant polynomial, return a list of its
 factors."
-  (let ((rps (remove p:+one+ (reducing-polynomials f p)
-                     :test #'p:polynomial=)))
-    (if (null rps)
-        (list f)
-        (labels ((collect-factors (g)
-                   ;; Return non-trivial factors of g. They are not necessarily
-                   ;; irreducible and not all irreducible factors are contained
-                   ;; in this factorization.
-                   (reduce
-                    (lambda (acc rp)
-                      (labels ((add-factors (n acc)
-                                 (if (= n p) acc
-                                     (add-factors
-                                      (1+ n)
-                                      (let ((gcd
-                                             (gcd g (modulo (p:add rp (p:scale p:+one+ n)) p)
-                                                  p)))
-                                        (if (p:polynomial= gcd p:+one+) acc
-                                            (cons gcd acc)))))))
-                        (add-factors 0 acc)))
-                    rps
-                    :initial-value nil))
-                 (more-factors (factors)
-                   ;; (MORE-FACTORS (COLLECT-FACTORS G)) return *all*
-                   ;; non-trivial factors.
-                   (let* ((old-factors (remove-duplicates factors :test #'p:polynomial=))
-                          (new-factors (remove-duplicates
-                                        ;; Here we calculate some redundant GCDs because
-                                        ;; gcd(f, gcd(f, g)) = gcd(f, g)
-                                        (reduce #'append old-factors :key #'collect-factors)
-                                        :test #'p:polynomial=)))
-                     ;; If there are nothing new, stop
-                     (if (null (set-difference new-factors old-factors :test #'p:polynomial=))
-                         new-factors
-                         (more-factors new-factors)))))
-          ;; Now we need to filter irreducible factors from this mess.
-          (let ((factors (more-factors (collect-factors f))))
-            (remove-if
-             (lambda (g)
-               (some
-                (lambda (h)
-                  (let ((gcd (gcd h g p)))
-                    (not
-                     (or (p:polynomial= gcd p:+one+)
-                         (p:polynomial= gcd g)))))
-                factors))
-             factors))))))
+  (let* ((rps (remove p:+one+ (reducing-polynomials f p)
+                      :test #'p:polynomial=))
+         (nfactors (1+ (length rps))))
+    (labels ((constant-poly (c)
+               (p:polynomial (list (cons 0 c))))
+             ;; Given a polynomial FACTOR and F-reducing polynomial RP, try to find
+             ;; non-trivial factors of FACTOR. If there are such factors, remove
+             ;; FACTOR from ACC, add those factors to ACC and try again.
+             (%collect-factors (factor rp element acc)
+               (if (or (= element p)
+                       (= (length acc) nfactors))
+                   acc
+                   (let ((gcd (gcd factor
+                                   (modulo (p:add rp (constant-poly element)) p) p))
+                         (next-element (1+ element)))
+                     (if (or (p:polynomial= gcd p:+one+)
+                             (p:polynomial= gcd factor))
+                         ;; GCD is a trivial factor of FACTOR, try the next element
+                         ;; of a finite field.
+                         (%collect-factors factor rp next-element acc)
+                         ;; GCD is a non-trivial factor of FACTOR, continue
+                         ;; recursively with factors GCD and FACTOR/GCD.
+                         (let ((new-factor (divide factor gcd p)))
+                           (%collect-factors
+                            gcd rp next-element
+                            (%collect-factors
+                             new-factor rp next-element
+                             (append (list new-factor gcd) (remove factor acc)))))))))
+             ;; Try to split already found factors of F in ACC using F-reducing
+             ;; polynomial RP.
+             (collect-factors (rp element acc)
+               (reduce
+                (lambda (acc factor)
+                  (if (= (length acc) nfactors) acc
+                      (%collect-factors factor rp element acc)))
+                acc :initial-value acc)))
+      ;; Starting with (F) as a list of known factors of F, try to use F-reducing
+      ;; polynomials to find NFACTORS distinct non-trivial factors of F.
+      (reduce
+       (lambda (acc rp)
+         (if (= (length acc) nfactors) acc
+             (collect-factors rp 0 acc)))
+       rps :initial-value (list f)))))
 
 ;; TODO: Generalize to constant polynomials?
 (sera:-> factor (p:polynomial u:prime)

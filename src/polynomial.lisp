@@ -2,7 +2,7 @@
 
 (defpackage cl-polynomial/polynomial
   (:use #:cl)
-  (:shadow #:constantp)
+  (:shadow #:constantp #:expt)
   (:local-nicknames (#:sera #:serapeum)
                     (#:alex #:alexandria)
                     (#:si   #:stateless-iterators)
@@ -26,7 +26,8 @@
            #:scale
            #:monicp
            #:constantp
-           #:derivative))
+           #:derivative
+           #:expt))
 (in-package :cl-polynomial/polynomial)
 
 (defstruct polynomial
@@ -300,3 +301,13 @@ coefficient is positive."
     (polynomial-coeffs polynomial)
     :from-end t
     :initial-value nil)))
+
+(sera:-> expt (polynomial unsigned-byte)
+         (values polynomial &optional))
+(defun expt (f n)
+  "For polynomial \\(f(x)\\) and a non-negative integer number \\(n\\)
+calculate \\(f^n(x)\\)."
+  (labels ((%expt (acc n)
+             (if (zerop n) acc
+                 (%expt (%multiply acc f) (1- n)))))
+    (%expt +one+ n)))

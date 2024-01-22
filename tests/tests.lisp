@@ -158,6 +158,15 @@
                 (is (p:polynomial= (zx:remainder lcm poly1) p:+zero+))
                 (is (p:polynomial= (zx:remainder lcm poly2) p:+zero+))))))))
 
+(test expt
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let ((p (random-poly 20 state 10))
+              (n (random 10)))
+          (unless (p:constantp p)
+            (is-true (every (lambda (x) (>= (car x) n))
+                            (zx:factor (p:expt p n))))))))
+
 (in-suite factor)
 
 (test square-free

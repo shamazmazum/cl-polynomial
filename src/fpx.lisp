@@ -342,6 +342,20 @@ factor must be of degree @c(deg)."
                            %acc))))))
       (collect-factors f (list f)))))
 
+;; f(x)^q mod q can be done really fast, no need to
+;; call slow P:EXPT.
+(sera:-> expt-q (p:polynomial u:prime)
+         (values p:polynomial &optional))
+(defun expt-q (f q)
+  "Calculate \\(f(x)^q mod q\\)."
+  (p:polynomial
+   (mapcar
+    (lambda (monomial)
+      (u:bind-monomial (d c)
+          monomial
+        (cons (* d q) c)))
+    (p:polynomial-coeffs f))))
+
 (sera:-> distinct-degree (p:polynomial u:prime)
          (values list &optional))
 (defun distinct-degree (f p)
@@ -356,7 +370,7 @@ polynomial \\(f \\in \\mathbb{F}_p[x]\\). Return a list of pairs
                ((> deg (floor (p:degree f) 2))
                 (cons (cons (p:degree f) f) acc))
                (t
-                (let* ((w (remainder (modulo (p:expt w p) p) f p))
+                (let* ((w (remainder (modulo (expt-q w p) p) f p))
                        (gcd (gcd f (modulo (p:subtract w x) p) p)))
                   (if (p:polynomial= gcd p:+one+)
                       (collect f w (1+ deg) acc)

@@ -302,15 +302,44 @@ factors."
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
 
-(sera:-> cantor-zassenhaus (p:polynomial list u:prime u:degree)
+(sera:-> expt-rem (p:polynomial unsigned-byte p:polynomial u:prime)
+         (values p:polynomial &optional))
+(defun expt-rem (f n g p)
+  "Calculate \\(f^n(x) \\mod g(x)\\) for a non-negative integer
+\\(n\\) and \\(f,g \\in \\mathbb{F}_p[x]\\)."
+  (let ((half (floor n 2)))
+    (cond
+      ((zerop n) p:+one+)
+      ((evenp n)
+       (expt-rem (remainder (modulo (p:multiply f f) p) g p) half g p))
+      (t
+       (remainder (modulo (p:multiply f (expt-rem (p:multiply f f) half g p)) p)
+                  g p)))))
+
+;; f(x)^q mod q can be done really fast, no need to call slow EXPT-REM.
+(sera:-> expt-q (p:polynomial u:prime)
+         (values p:polynomial &optional))
+(defun expt-q (f q)
+  "Calculate \\(f(x)^q mod q\\)."
+  (p:polynomial
+   (mapcar
+    (lambda (monomial)
+      (u:bind-monomial (d c)
+          monomial
+        (cons (* d q) c)))
+    (p:polynomial-coeffs f))))
+
+(sera:-> cantor-zassenhaus (p:polynomial u:prime u:degree)
          (values list &optional))
-(defun cantor-zassenhaus (f rps p deg)
+(defun cantor-zassenhaus (f p deg)
   "Given a monic square-free non-constant polynomial, return a list of
 its factors in \\(\\mathbb{F}_p[x]\\) for a prime \\(p > 2\\). Each
 factor must be of degree @c(deg)."
   (assert (> p 2))
   (let ((nfactors (/ (p:degree f) deg))
-        (half (floor p 2)))
+        (half (floor p 2))
+        (rps (reducing-polynomials f p)))
+    (assert (= (length rps) nfactors))
     (labels ((random-poly ()
                ;; Construct a random polynomial from the kernel space of
                ;; Berlekamp matrix.
@@ -318,11 +347,11 @@ factor must be of degree @c(deg)."
                 (lambda (acc rp)
                   (p:add acc (p:scale rp (random p))))
                 rps :initial-value p:+zero+))
-             (w ()
-               (modulo (p:add (p:expt (random-poly) half) p:+one+) p))
+             (w (f)
+               (modulo (p:add (expt-rem (random-poly) half f p) p:+one+) p))
              (collect-factors (factor acc)
                (if (= (length acc) nfactors) acc
-                   (let ((gcd (gcd factor (w) p)))
+                   (let ((gcd (gcd factor (w f) p)))
                      (if (or (p:polynomial= gcd p:+one+)
                              (p:polynomial= gcd factor))
                          ;; GCD is a trivial factor of FACTOR, try another
@@ -341,20 +370,6 @@ factor must be of degree @c(deg)."
                                           (collect-factors new-factor %acc))))
                            %acc))))))
       (collect-factors f (list f)))))
-
-;; f(x)^q mod q can be done really fast, no need to
-;; call slow P:EXPT.
-(sera:-> expt-q (p:polynomial u:prime)
-         (values p:polynomial &optional))
-(defun expt-q (f q)
-  "Calculate \\(f(x)^q mod q\\)."
-  (p:polynomial
-   (mapcar
-    (lambda (monomial)
-      (u:bind-monomial (d c)
-          monomial
-        (cons (* d q) c)))
-    (p:polynomial-coeffs f))))
 
 (sera:-> distinct-degree (p:polynomial u:prime)
          (values list &optional))
@@ -385,12 +400,11 @@ polynomial \\(f \\in \\mathbb{F}_p[x]\\). Return a list of pairs
   "Perform factorization of a non-constant square-free polynomial in a
 big finite field by firstly apply DISTINCT-DEGREE and then
 CANTOR-ZASSENHAUS to F."
-  (let ((rps (reducing-polynomials f p))
-        (factors (distinct-degree f p)))
+  (let ((factors (distinct-degree f p)))
     (reduce #'append factors
             :from-end t ; Less consing
             :key (lambda (factor)
-                   (cantor-zassenhaus (cdr factor) rps p (car factor))))))
+                   (cantor-zassenhaus (cdr factor) p (car factor))))))
 
 ;; TODO: Generalize to constant polynomials?
 (sera:-> factor (p:polynomial u:prime)
@@ -407,7 +421,7 @@ CANTOR-ZASSENHAUS to F."
                  (mapcar
                   (lambda (irreducible-factor)
                     (cons m irreducible-factor))
-                  (if (<= p 5)
+                  (if (<= p 7)
                       (berlekamp-factor f p)
                       (big-field-factor f p))))))
      m)))

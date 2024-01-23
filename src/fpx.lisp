@@ -88,9 +88,7 @@ This function returns the second value of @c(divide)."
 \\(p\\) being prime, into a monic polynomial and a constant factor."
   (let ((c (p:leading-coeff polynomial)))
     (values
-     (if (zerop c)
-         ;; This polynomial equals to 0
-         p:+zero+
+     (if (zerop c) p:+zero+
          (modulo
           (p:scale polynomial (u:invert-integer c p)) p))
      c)))
@@ -270,8 +268,7 @@ factors."
                (if (or (= element p)
                        (= (length acc) nfactors))
                    acc
-                   (let ((gcd (gcd factor
-                                   (modulo (p:add rp (constant-poly element)) p) p))
+                   (let ((gcd (gcd factor (p:add rp (constant-poly element)) p))
                          (next-element (1+ element)))
                      (if (or (p:polynomial= gcd p:+one+)
                              (p:polynomial= gcd factor))
@@ -302,6 +299,11 @@ factors."
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
 
+(sera:-> square-rem (p:polynomial p:polynomial u:prime)
+         (values p:polynomial &optional))
+(defun square-rem (f g p)
+  (remainder (p:multiply f f) g p))
+
 (sera:-> expt-rem (p:polynomial unsigned-byte p:polynomial u:prime)
          (values p:polynomial &optional))
 (defun expt-rem (f n g p)
@@ -311,10 +313,9 @@ factors."
     (cond
       ((zerop n) p:+one+)
       ((evenp n)
-       (expt-rem (remainder (modulo (p:multiply f f) p) g p) half g p))
+       (expt-rem (square-rem f g p) half g p))
       (t
-       (remainder (modulo (p:multiply f (expt-rem (p:multiply f f) half g p)) p)
-                  g p)))))
+       (remainder (p:multiply f (expt-rem (square-rem f g p) half g p)) g p)))))
 
 ;; f(x)^q mod q can be done really fast, no need to call slow EXPT-REM.
 (sera:-> expt-q (p:polynomial u:prime)
@@ -336,19 +337,16 @@ factors."
 its factors in \\(\\mathbb{F}_p[x]\\) for a prime \\(p > 2\\). Each
 factor must be of degree @c(deg)."
   (assert (> p 2))
-  (let ((nfactors (/ (p:degree f) deg))
-        (half (floor p 2))
-        (rps (reducing-polynomials f p)))
-    (assert (= (length rps) nfactors))
+  (let ((nfactors (/ (p:degree f) deg)))
     (labels ((random-poly ()
-               ;; Construct a random polynomial from the kernel space of
-               ;; Berlekamp matrix.
-               (reduce
-                (lambda (acc rp)
-                  (p:add acc (p:scale rp (random p))))
-                rps :initial-value p:+zero+))
+               (p:add
+                (p:list->polynomial
+                 (loop repeat (1- (* 2 deg))
+                       collect (- (random p) (floor p 2))))
+                (p:polynomial (list (cons (1- (* 2 deg)) 1)))))
              (w (f)
-               (modulo (p:add (expt-rem (random-poly) half f p) p:+one+) p))
+               (modulo
+                (p:add (expt-rem (random-poly) (floor (expt p deg) 2) f p) p:+one+) p))
              (collect-factors (factor acc)
                (if (= (length acc) nfactors) acc
                    (let ((gcd (gcd factor (w f) p)))
@@ -385,8 +383,8 @@ polynomial \\(f \\in \\mathbb{F}_p[x]\\). Return a list of pairs
                ((> deg (floor (p:degree f) 2))
                 (cons (cons (p:degree f) f) acc))
                (t
-                (let* ((w (remainder (modulo (expt-q w p) p) f p))
-                       (gcd (gcd f (modulo (p:subtract w x) p) p)))
+                (let* ((w (remainder (expt-q w p) f p))
+                       (gcd (gcd f (p:subtract w x) p)))
                   (if (p:polynomial= gcd p:+one+)
                       (collect f w (1+ deg) acc)
                       (collect (divide f gcd p)
@@ -407,9 +405,9 @@ CANTOR-ZASSENHAUS to F."
                    (cantor-zassenhaus (cdr factor) p (car factor))))))
 
 ;; TODO: Generalize to constant polynomials?
-(sera:-> factor (p:polynomial u:prime)
+(sera:-> factor (p:polynomial u:prime &optional boolean)
          (values list integer &optional))
-(defun factor (polynomial p)
+(defun factor (polynomial p &optional force-berlekamp-p)
   "Factor a polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
   (multiple-value-bind (sqfr-factors m)
       (square-free polynomial p)
@@ -421,7 +419,7 @@ CANTOR-ZASSENHAUS to F."
                  (mapcar
                   (lambda (irreducible-factor)
                     (cons m irreducible-factor))
-                  (if (<= p 7)
+                  (if (or force-berlekamp-p (= p 2))
                       (berlekamp-factor f p)
                       (big-field-factor f p))))))
      m)))

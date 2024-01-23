@@ -302,16 +302,15 @@ factors."
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
 
-(sera:-> cantor-zassenhaus (p:polynomial u:prime u:degree)
+(sera:-> cantor-zassenhaus (p:polynomial list u:prime u:degree)
          (values list &optional))
-(defun cantor-zassenhaus (f p deg)
+(defun cantor-zassenhaus (f rps p deg)
   "Given a monic square-free non-constant polynomial, return a list of
 its factors in \\(\\mathbb{F}_p[x]\\) for a prime \\(p > 2\\). Each
 factor must be of degree @c(deg)."
   (assert (> p 2))
-  (let* ((rps (reducing-polynomials f p))
-         (nfactors (length rps))
-         (half (floor p 2)))
+  (let ((nfactors (/ (p:degree f) deg))
+        (half (floor p 2)))
     (labels ((random-poly ()
                ;; Construct a random polynomial from the kernel space of
                ;; Berlekamp matrix.
@@ -366,6 +365,19 @@ polynomial \\(f \\in \\mathbb{F}_p[x]\\). Return a list of pairs
                         (cons (cons deg gcd) acc))))))))
       (collect f x 1 nil))))
 
+(sera:-> big-field-factor (p:polynomial u:prime)
+         (values list &optional))
+(defun big-field-factor (f p)
+  "Perform factorization of a non-constant square-free polynomial in a
+big finite field by firstly apply DISTINCT-DEGREE and then
+CANTOR-ZASSENHAUS to F."
+  (let ((rps (reducing-polynomials f p))
+        (factors (distinct-degree f p)))
+    (reduce #'append factors
+            :from-end t ; Less consing
+            :key (lambda (factor)
+                   (cantor-zassenhaus (cdr factor) rps p (car factor))))))
+
 ;; TODO: Generalize to constant polynomials?
 (sera:-> factor (p:polynomial u:prime)
          (values list integer &optional))
@@ -381,5 +393,7 @@ polynomial \\(f \\in \\mathbb{F}_p[x]\\). Return a list of pairs
                  (mapcar
                   (lambda (irreducible-factor)
                     (cons m irreducible-factor))
-                  (berlekamp-factor f p)))))
+                  (if (<= p 5)
+                      (berlekamp-factor f p)
+                      (big-field-factor f p))))))
      m)))

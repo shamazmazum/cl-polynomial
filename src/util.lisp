@@ -5,6 +5,7 @@
   (:export #:matrix
            #:row
            #:prime
+           #:degree
            #:monomial
 
            #:mod-sym
@@ -21,8 +22,11 @@
 ;; A bit more narrow range for primes
 (deftype prime () '(integer 2 #.most-positive-fixnum))
 
+;; A type for degree of a polynomial
+(deftype degree () 'alex:non-negative-fixnum)
+
 ;; FIXME: let monomial be just an alias for a tuple?
-(deftype monomial () '(cons alex:non-negative-fixnum integer))
+(deftype monomial () '(cons degree integer))
 
 ;; Symmetric modulo operation widely used in cl-polynomial instead of
 ;; MOD.

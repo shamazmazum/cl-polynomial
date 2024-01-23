@@ -15,6 +15,7 @@
            #:gcdex
 
            #:square-free ; Factorization
+           #:distinct-degree
            #:berlekamp-factor
            #:reducing-polynomials
            #:irreduciblep
@@ -300,6 +301,70 @@ factors."
          (if (= (length acc) nfactors) acc
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
+
+(sera:-> cantor-zassenhaus (p:polynomial u:prime u:degree)
+         (values list &optional))
+(defun cantor-zassenhaus (f p deg)
+  "Given a monic square-free non-constant polynomial, return a list of
+its factors in \\(\\mathbb{F}_p[x]\\) for a prime \\(p > 2\\). Each
+factor must be of degree @c(deg)."
+  (assert (> p 2))
+  (let* ((rps (reducing-polynomials f p))
+         (nfactors (length rps))
+         (half (floor p 2)))
+    (labels ((random-poly ()
+               ;; Construct a random polynomial from the kernel space of
+               ;; Berlekamp matrix.
+               (reduce
+                (lambda (acc rp)
+                  (p:add acc (p:scale rp (random p))))
+                rps :initial-value p:+zero+))
+             (w ()
+               (modulo (p:add (p:expt (random-poly) half) p:+one+) p))
+             (collect-factors (factor acc)
+               (if (= (length acc) nfactors) acc
+                   (let ((gcd (gcd factor (w) p)))
+                     (if (or (p:polynomial= gcd p:+one+)
+                             (p:polynomial= gcd factor))
+                         ;; GCD is a trivial factor of FACTOR, try another
+                         ;; random polynomial.
+                         (collect-factors factor acc)
+                         ;; GCD is a non-trivial factor of FACTOR, continue
+                         ;; recursively with factors GCD and FACTOR/GCD.
+                         (let* ((new-factor (divide factor gcd p))
+                                (%acc (append (list new-factor gcd)
+                                              (remove factor acc)))
+                                ;; Factor GCD if needed
+                                (%acc (if (= (p:degree gcd) deg) %acc
+                                          (collect-factors gcd %acc)))
+                                ;; Factor NEW-FACTOR if needed
+                                (%acc (if (= (p:degree new-factor) deg) %acc
+                                          (collect-factors new-factor %acc))))
+                           %acc))))))
+      (collect-factors f (list f)))))
+
+(sera:-> distinct-degree (p:polynomial u:prime)
+         (values list &optional))
+(defun distinct-degree (f p)
+  "Perform distinct degree factorization of a non-constant square-free
+polynomial \\(f \\in \\mathbb{F}_p[x]\\). Return a list of pairs
+\\((d_i . p_i)\\) where \\(p_i\\) is a product of all factors of
+\\(f\\) of degree \\(d_i\\)."
+  (let ((x (p:polynomial '((1 . 1)))))
+    (labels ((collect (f w deg acc)
+               (cond
+                 ((p:polynomial= f p:+one+) acc)
+               ((> deg (floor (p:degree f) 2))
+                (cons (cons (p:degree f) f) acc))
+               (t
+                (let* ((w (remainder (modulo (p:expt w p) p) f p))
+                       (gcd (gcd f (modulo (p:subtract w x) p) p)))
+                  (if (p:polynomial= gcd p:+one+)
+                      (collect f w (1+ deg) acc)
+                      (collect (divide f gcd p)
+                        w (1+ deg)
+                        (cons (cons deg gcd) acc))))))))
+      (collect f x 1 nil))))
 
 ;; TODO: Generalize to constant polynomials?
 (sera:-> factor (p:polynomial u:prime)

@@ -36,6 +36,15 @@
                (loop repeat m collect f))))
     factors)))
 
+(defun make-square-free (polynomial prime)
+  (ratsimp
+   (mapcar
+    (lambda (factor)
+      (destructuring-bind (m . f) factor
+        (declare (ignore m))
+        (cons 1 f)))
+    (fpx:square-free polynomial prime))))
+
 (def-suite algebra :description "Generic algebraic operations on polynomials")
 (def-suite factor  :description "Factorization of polynomials over finite fields")
 
@@ -181,6 +190,25 @@
             (is (p:polynomial=
                  (fpx:modulo (ratsimp (fpx:square-free polynomial prime)) prime)
                  polynomial))))))
+
+(test distinct-degree
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let* ((prime (+ 2 (random 2 state)))
+               (poly (random-poly prime state 20)))
+          (unless (p:constantp poly)
+            (let* ((poly (make-square-free poly prime))
+                   (factors (fpx:distinct-degree poly prime))
+                   (rps (fpx:reducing-polynomials poly prime)))
+              (dolist (factor factors)
+                (destructuring-bind (deg . f) factor
+                  (is (not (zerop (p:degree f))))
+                  (is (zerop (rem (p:degree f) deg)))))
+              (is (= (length rps)
+                     (reduce #'+ factors
+                             :key (lambda (factor)
+                                    (/ (p:degree (cdr factor))
+                                       (car factor)))))))))))
 
 (test reducing-polys
   (loop with state = (make-random-state t)

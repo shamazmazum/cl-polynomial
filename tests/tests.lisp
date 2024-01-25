@@ -45,6 +45,10 @@
         (cons 1 f)))
     (fpx:square-free polynomial prime))))
 
+(defun set-equal-p (s1 s2)
+  (and (subsetp s1 s2 :test #'equalp)
+       (subsetp s2 s1 :test #'equalp)))
+
 (def-suite algebra :description "Generic algebraic operations on polynomials")
 (def-suite factor  :description "Factorization of polynomials over finite fields")
 
@@ -180,11 +184,8 @@
 
 (test square-free
   (loop with state = (make-random-state t)
-        repeat 10000 do
-        ;; Generate polynomials with low degree in 𝔽_p[x] with p equal
-        ;; to 2 or 3, so the result may have non-trivial factorization
-        ;; with high amount of probability.
-        (let* ((prime (+ 2 (random 2 state)))
+        repeat 40000 do
+        (let* ((prime (random-prime state))
                (polynomial (fpx:monic-polynomial (random-poly prime state 20) prime)))
           (unless (p:polynomial= polynomial p:+zero+)
             (is (p:polynomial=
@@ -193,8 +194,8 @@
 
 (test distinct-degree
   (loop with state = (make-random-state t)
-        repeat 10000 do
-        (let* ((prime (+ 2 (random 2 state)))
+        repeat 40000 do
+        (let* ((prime (random-prime state))
                (poly (random-poly prime state 20)))
           (unless (p:constantp poly)
             (let* ((poly (make-square-free poly prime))
@@ -212,35 +213,30 @@
 
 (test reducing-polys
   (loop with state = (make-random-state t)
-        repeat 10000 do
-        ;; Generate polynomials with low degree in 𝔽_p[x] with p equal
-        ;; to 2 or 3, so the result may have non-trivial factorization
-        ;; with high amount of probability.
-        (let* ((prime (+ 2 (random 2 state)))
+        repeat 40000 do
+        (let* ((prime (random-prime state))
                (polynomial (fpx:monic-polynomial (random-poly prime state 20) prime)))
           (unless (zerop (p:degree polynomial))
             (dolist (rp (fpx:reducing-polynomials polynomial prime))
               (is (p:polynomial=
-                   (fpx:remainder (fpx:modulo
-                                   (apply #'p:multiply
-                                          (loop repeat prime collect rp))
-                                   prime)
-                                  polynomial prime)
+                   ;; rp^prime mod polynomial
+                   (fpx:modulo (fpx::expt-rem rp prime polynomial prime) prime)
                    rp)))))))
 
 (test factor-finite
   (loop with state = (make-random-state t)
-        repeat 10000 do
-        ;; The same comment as above
-        (let* ((prime (+ 2 (random 2 state)))
+        repeat 40000 do
+        (let* ((prime (random-prime state))
                (polynomial (fpx:monic-polynomial (random-poly prime state 20) prime)))
           (unless (zerop (p:degree polynomial))
             (multiple-value-bind (factors c)
-                (fpx:factor polynomial prime)
-              (is (p:polynomial= polynomial
-                                 (fpx:modulo (p:scale (ratsimp factors) c) prime)))
+                (fpx:factor polynomial prime :berlekamp)
+              (is (p:polynomial= polynomial (fpx:modulo (p:scale (ratsimp factors) c) prime)))
               (dolist (factor factors)
-                (is-true (fpx:irreduciblep (cdr factor) prime))))))))
+                (is-true (fpx:irreduciblep (cdr factor) prime)))
+              (when (/= prime 2)
+                (let ((%factors (fpx:factor polynomial prime :cantor-zassenhaus)))
+                  (is (set-equal-p factors %factors)))))))))
 
 (test lifting
   (loop with state = (make-random-state t)

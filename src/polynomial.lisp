@@ -31,7 +31,8 @@
            #:evaluate))
 (in-package :cl-polynomial/polynomial)
 
-(defstruct polynomial
+(defstruct (polynomial
+             (:constructor polynomial (coeffs)))
   (coeffs nil :type list :read-only t))
 
 (sera:-> polynomial= (polynomial polynomial)
@@ -40,13 +41,6 @@
   "Test if two polynomials are equal."
   (equalp (polynomial-coeffs poly1)
           (polynomial-coeffs poly2)))
-
-;; Convenient constructor
-(sera:-> polynomial (list)
-         (values polynomial &optional))
-(declaim (inline polynomial))
-(defun polynomial (list)
-  (make-polynomial :coeffs list))
 
 (sera:-> degree (polynomial)
          (values alex:non-negative-integer &optional))

@@ -404,11 +404,16 @@ CANTOR-ZASSENHAUS to F."
             :key (lambda (factor)
                    (cantor-zassenhaus (cdr factor) p (car factor))))))
 
+(deftype factorization-algorithm ()
+  '(member :berlekamp :cantor-zassenhaus))
+
 ;; TODO: Generalize to constant polynomials?
-(sera:-> factor (p:polynomial u:prime &optional boolean)
+(sera:-> factor (p:polynomial u:prime &optional factorization-algorithm)
          (values list integer &optional))
-(defun factor (polynomial p &optional force-berlekamp-p)
-  "Factor a polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible factors."
+(defun factor (polynomial p &optional (algorithm :berlekamp))
+  "Factor a polynomial in \\(\\mathbb{F}_p[x]\\) into irreducible
+factors. An optional parameter @c(algorithm) can be either
+@c(:berlekamp) (default) or @c(:cantor-zassenhaus)."
   (multiple-value-bind (sqfr-factors m)
       (square-free polynomial p)
     (values
@@ -419,7 +424,11 @@ CANTOR-ZASSENHAUS to F."
                  (mapcar
                   (lambda (irreducible-factor)
                     (cons m irreducible-factor))
-                  (if (or force-berlekamp-p (= p 2))
-                      (berlekamp-factor f p)
-                      (big-field-factor f p))))))
+                  (cond
+                    ((or (eq algorithm :berlekamp) (= p 2))
+                     (berlekamp-factor f p))
+                    ((eq algorithm :cantor-zassenhaus)
+                     (big-field-factor f p))
+                    (t
+                     (error "ALGORITHM must be either :BERLEKAMP or :CANTOR-ZASSENHAUS")))))))
      m)))

@@ -254,11 +254,10 @@ coefficient is positive."
 (sera:-> %multiply (polynomial polynomial)
          (values polynomial &optional))
 (defun %multiply (poly1 poly2)
-  (let ((polys (mapcar
-                (lambda (monomial)
-                  (multiply-monomial monomial poly2))
-                (polynomial-coeffs poly1))))
-    (reduce #'%add polys :initial-value +zero+)))
+  (reduce #'%add (polynomial-coeffs poly1)
+          :initial-value +zero+
+          :key (lambda (monomial)
+                 (multiply-monomial monomial poly2))))
 
 (sera:-> multiply (&rest polynomial)
          (values polynomial &optional))

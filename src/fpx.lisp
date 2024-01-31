@@ -4,6 +4,7 @@
   (:use #:cl)
   (:shadow #:gcd)
   (:local-nicknames (#:sera #:serapeum)
+                    (#:alex #:alexandria)
                     (#:u    #:cl-polynomial/util)
                     (#:p    #:cl-polynomial/polynomial)
                     (#:la   #:cl-polynomial/linalg))
@@ -299,23 +300,23 @@ factors."
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
 
-(sera:-> square-rem (p:polynomial p:polynomial u:prime)
-         (values p:polynomial &optional))
-(defun square-rem (f g p)
-  (remainder (p:multiply f f) g p))
-
-(sera:-> expt-rem (p:polynomial unsigned-byte p:polynomial u:prime)
+(sera:-> expt-rem (p:polynomial alex:non-negative-fixnum p:polynomial u:prime)
          (values p:polynomial &optional))
 (defun expt-rem (f n g p)
   "Calculate \\(f^n(x) \\mod g(x)\\) for a non-negative integer
 \\(n\\) and \\(f,g \\in \\mathbb{F}_p[x]\\)."
-  (let ((half (floor n 2)))
-    (cond
-      ((zerop n) p:+one+)
-      ((evenp n)
-       (expt-rem (square-rem f g p) half g p))
-      (t
-       (remainder (p:multiply f (expt-rem (square-rem f g p) half g p)) g p)))))
+  (declare (optimize (speed 3)))
+  (labels ((square (f)
+             (remainder (p:multiply f f) g p))
+           (%expt-rem (f n acc)
+             (declare (type alex:non-negative-fixnum n))
+             (cond
+               ((zerop n) acc)
+               ((evenp n)
+                (%expt-rem (square f) (floor n 2) acc))
+               (t
+                (%expt-rem f (1- n) (remainder (p:multiply f acc) g p))))))
+    (%expt-rem f n p:+one+)))
 
 ;; f(x)^q mod q can be done really fast, no need to call slow EXPT-REM.
 (sera:-> expt-q (p:polynomial u:prime)

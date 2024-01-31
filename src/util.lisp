@@ -30,8 +30,10 @@
 
 ;; Symmetric modulo operation widely used in cl-polynomial instead of
 ;; MOD.
-(sera:-> mod-sym (fixnum prime)
-         (values fixnum &optional))
+;; NB: INTEGER may be replaced with FIXNUM only in the case of finite
+;; fields. ZX:LIFT-FACTORS *REQUIRES* integers here.
+(sera:-> mod-sym (integer prime)
+         (values integer &optional))
 (defun mod-sym (x n)
   "Compute \\(x \\mod n\\). The result is in a range \\(0 \\dots 1\\)
 if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."

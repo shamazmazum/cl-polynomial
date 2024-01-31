@@ -306,16 +306,16 @@ factors."
   "Calculate \\(f^n(x) \\mod g(x)\\) for a non-negative integer
 \\(n\\) and \\(f,g \\in \\mathbb{F}_p[x]\\)."
   (declare (optimize (speed 3)))
-  (labels ((square (f)
-             (remainder (p:multiply f f) g p))
+  (labels ((mul-rem (f1 f2)
+             (remainder (modulo (p:multiply f1 f2) p) g p))
            (%expt-rem (f n acc)
              (declare (type alex:non-negative-fixnum n))
              (cond
                ((zerop n) acc)
                ((evenp n)
-                (%expt-rem (square f) (floor n 2) acc))
+                (%expt-rem (mul-rem f f) (floor n 2) acc))
                (t
-                (%expt-rem f (1- n) (remainder (p:multiply f acc) g p))))))
+                (%expt-rem f (1- n) (mul-rem f acc))))))
     (%expt-rem f n p:+one+)))
 
 ;; f(x)^q mod q can be done really fast, no need to call slow EXPT-REM.

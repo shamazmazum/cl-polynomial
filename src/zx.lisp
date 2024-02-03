@@ -52,7 +52,7 @@ part and content."
          (declare (ignore %c))
          (cons (cons d c) rest)))))
 
-(sera:-> fix-unit (p:polynomial integer u:prime)
+(sera:-> fix-unit (p:polynomial integer u:prime-power)
          (values p:polynomial &optional))
 (declaim (inline fix-unit))
 (defun fix-unit (f lc q)
@@ -62,7 +62,7 @@ part and content."
 ;; Quadratic lifting
 ;; https://www.csd.uwo.ca/~mmorenom/CS874/Lectures/Newton2Hensel.html/node17.html
 (sera:-> lifting-step
-         (p:polynomial p:polynomial p:polynomial p:polynomial p:polynomial u:prime)
+         (p:polynomial p:polynomial p:polynomial p:polynomial p:polynomial u:prime-power)
          (values p:polynomial p:polynomial p:polynomial p:polynomial &optional))
 (defun lifting-step (f g h s p m)
   (let ((e (fpx:modulo (p:subtract f (p:multiply g h)) m)))
@@ -79,7 +79,7 @@ part and content."
                  (fpx:modulo (p:subtract s d) m)
                  (fpx:modulo (p:subtract p (p:multiply p b) (p:multiply c %g)) m)))))))
 
-(sera:-> lift-factors (p:polynomial p:polynomial p:polynomial u:prime)
+(sera:-> lift-factors (p:polynomial p:polynomial p:polynomial u:prime-power)
          (values p:polynomial p:polynomial boolean &optional))
 (defun lift-factors (f g h q)
   "For a primitive polynomial \\(f \\in \\mathbb{Z}[x]\\) with leading

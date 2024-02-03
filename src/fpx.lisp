@@ -25,22 +25,22 @@
 
 ;; OPERATIONS
 
-(sera:-> modulo (p:polynomial u:prime)
+(sera:-> modulo (p:polynomial u:prime-power)
          (values p:polynomial &optional))
-(defun modulo (polynomial n)
+(defun modulo (polynomial q)
   "Return a polynomial with every coefficient of @c(polynomial) being
-taken modulo @c(n)."
+taken modulo @c(q)."
   (p:polynomial
    (reduce
     (lambda (monomial acc)
       (u:bind-monomial (d c) monomial
-        (let ((c (u:mod-sym c n)))
+        (let ((c (u:mod-sym c q)))
           (if (zerop c) acc (cons (cons d c) acc)))))
     (p:polynomial-coeffs polynomial)
     :from-end t
     :initial-value nil)))
 
-(sera:-> divide (p:polynomial p:polynomial u:prime)
+(sera:-> divide (p:polynomial p:polynomial u:prime-power)
          (values p:polynomial p:polynomial &optional))
 (defun divide (poly1 poly2 p)
   "Calculate \\(p_1 / p_2\\) where \\(p_1, p_2 \\in
@@ -72,7 +72,7 @@ are returned as 2 values."
                                p))))))))
           (division-step nil poly1)))))
 
-(sera:-> remainder (p:polynomial p:polynomial u:prime)
+(sera:-> remainder (p:polynomial p:polynomial u:prime-power)
          (values p:polynomial &optional))
 (declaim (inline remainder))
 (defun remainder (poly1 poly2 p)
@@ -82,7 +82,7 @@ are returned as 2 values."
 This function returns the second value of @c(divide)."
   (nth-value 1 (divide poly1 poly2 p)))
 
-(sera:-> monic-polynomial (p:polynomial u:prime)
+(sera:-> monic-polynomial (p:polynomial u:prime-power)
          (values p:polynomial integer &optional))
 (defun monic-polynomial (polynomial p)
   "Factor an arbitrary non-zero polynomial in \\(\\mathbb{F}_p[x]\\),
@@ -94,7 +94,7 @@ This function returns the second value of @c(divide)."
           (p:scale polynomial (u:invert-integer c p)) p))
      c)))
 
-(sera:-> gcd (p:polynomial p:polynomial u:prime)
+(sera:-> gcd (p:polynomial p:polynomial u:prime-power)
          (values p:polynomial &optional))
 (defun gcd (poly1 poly2 p)
   "Calculate the greatest common divisor of two polynomials in
@@ -122,7 +122,7 @@ This function returns the second value of @c(divide)."
               (%gcd poly1 poly2)
               (%gcd poly2 poly1))))))))
 
-(sera:-> gcdex (p:polynomial p:polynomial u:prime)
+(sera:-> gcdex (p:polynomial p:polynomial u:prime-power)
          (values p:polynomial p:polynomial p:polynomial &optional))
 (defun gcdex (poly1 poly2 p)
   "Find \\(\\gcd(p_1, p_2)\\), \\(p_1, p_2 \\in \\mathbb{F}_p[x]\\)

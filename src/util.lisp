@@ -5,6 +5,7 @@
   (:export #:matrix
            #:row
            #:prime
+           #:prime-power
            #:degree
            #:monomial
 
@@ -21,7 +22,10 @@
 (deftype row () '(simple-array (signed-byte 32) (*)))
 
 ;; A bit more narrow range for primes
-(deftype prime () '(integer 2))
+(deftype prime () '(integer 2 #.most-positive-fixnum))
+;; A power of a prime. In the Hensel lifting this often goes above the
+;; most positive fixnum.
+(deftype prime-power () '(integer 2))
 
 ;; A type for degree of a polynomial
 (deftype degree () 'alex:non-negative-fixnum)
@@ -33,12 +37,11 @@
 ;; MOD.
 ;; NB: INTEGER may be replaced with FIXNUM only in the case of finite
 ;; fields. ZX:LIFT-FACTORS *REQUIRES* integers here.
-(sera:-> mod-sym (integer prime)
+(sera:-> mod-sym (integer prime-power)
          (values integer &optional))
 (defun mod-sym (x n)
   "Compute \\(x \\mod n\\). The result is in a range \\(0 \\dots 1\\)
 if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."
-  (declare (optimize (speed 3)))
   (let ((mod (mod x n))
         (half (floor n 2)))
     (if (or (= n 2)
@@ -74,20 +77,21 @@ values."
              (values gcd d s)))))))
 
 ;; TODO: Update docs and types: works for any ring if the inverse exists.
-(sera:-> invert-integer (integer prime)
+(sera:-> invert-integer (integer prime-power)
          (values integer &optional))
 (declaim (inline invert-integer))
-(defun invert-integer (n p)
-  "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{F}_p\\), p
-being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
+(defun invert-integer (n q)
+  "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{Z}_q\\), q
+being a power of prime, i.e. find \\(x\\) such that \\(xn = nx =
+1\\). Signal an error, if there is no such inverse."
   (when (zerop n)
     (error "Zero does not have a multiplicative inverse"))
   (multiple-value-bind (gcd a b)
-      (gcdex n p)
+      (gcdex n q)
     (declare (ignore b))
     (when (/= gcd 1)
       (error "N does not have a multiplicative inverse: N is not coprime with P"))
-    (mod-sym a p)))
+    (mod-sym a q)))
 
 ;; Like destructuring-bind, but without additional checks
 (defmacro bind-monomial ((deg coeff) monomial &body body)

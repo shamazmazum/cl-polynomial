@@ -81,9 +81,9 @@ values."
          (values integer &optional))
 (declaim (inline invert-integer))
 (defun invert-integer (n q)
-  "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{Z}_q\\), q
-being a power of prime, i.e. find \\(x\\) such that \\(xn = nx =
-1\\). Signal an error, if there is no such inverse."
+  "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{Z}_q\\),
+i.e. find \\(x\\) such that \\(xn = nx = 1\\). Signal an error, if
+there is no such inverse."
   (when (zerop n)
     (error "Zero does not have a multiplicative inverse"))
   (multiple-value-bind (gcd a b)

@@ -11,6 +11,7 @@
            #:polynomial=
            #:+zero+
            #:+one+
+           #:+variable+
            #:degree
            #:polynomial-coeffs
            #:leading-coeff
@@ -114,6 +115,9 @@ of @c(list->polynomial)."
 
 (defparameter +one+ (list->polynomial '(1))
   "Multiplicative identity")
+
+(defparameter +variable+ (list->polynomial '(0 1))
+  "The polynomial \\(x\\)")
 
 (sera:-> print-monomial (u:monomial boolean stream)
          (values &optional))

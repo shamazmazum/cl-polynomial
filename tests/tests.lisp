@@ -255,7 +255,7 @@
                 (destructuring-bind ((m1 . f1) (m2 . f2)) factors
                   (when (= m1 m2 1)
                     (multiple-value-bind (f1zx f2zx convp steps)
-                        (zx:lift-factors poly f1 f2 prime (zx:suitable-bound poly))
+                        (zx:lift-factors poly f1 f2 prime)
                       (declare (ignore steps))
                       ;; When a factorization in ℤ[x] exists...
                       (when convp

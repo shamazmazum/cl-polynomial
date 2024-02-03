@@ -21,7 +21,7 @@
 (deftype row () '(simple-array (signed-byte 32) (*)))
 
 ;; A bit more narrow range for primes
-(deftype prime () '(integer 2 #.most-positive-fixnum))
+(deftype prime () '(integer 2))
 
 ;; A type for degree of a polynomial
 (deftype degree () 'alex:non-negative-fixnum)

@@ -52,64 +52,71 @@ part and content."
          (declare (ignore %c))
          (cons (cons d c) rest)))))
 
-(sera:-> lift-factors
-         (p:polynomial p:polynomial p:polynomial u:prime (integer 0))
-         (values p:polynomial p:polynomial boolean (integer 0) &optional))
-(defun lift-factors (f f1 f2 p d)
+(sera:-> fix-unit (p:polynomial integer u:prime)
+         (values p:polynomial &optional))
+(declaim (inline fix-unit))
+(defun fix-unit (f lc q)
+  (fpx:modulo (p:scale f (* lc (u:invert-integer (p:leading-coeff f) q))) q))
+
+;; ========================================
+;; Quadratic lifting
+;; https://www.csd.uwo.ca/~mmorenom/CS874/Lectures/Newton2Hensel.html/node17.html
+(sera:-> lifting-step
+         (p:polynomial p:polynomial p:polynomial p:polynomial p:polynomial u:prime)
+         (values p:polynomial p:polynomial p:polynomial p:polynomial &optional))
+(defun lifting-step (f g h s p m)
+  (let ((e (fpx:modulo (p:subtract f (p:multiply g h)) m)))
+    (multiple-value-bind (q r)
+        (fpx:divide (p:multiply s e) h m)
+      (let* ((%g (fpx:modulo (p:add g (p:multiply p e) (p:multiply q g)) m))
+             (%h (fpx:modulo (p:add h r) m))
+             (b (fpx:modulo (p:subtract (p:add (p:multiply s %g) (p:multiply p %h)) p:+one+)
+                            m)))
+              (multiple-value-bind (c d)
+                  (fpx:divide (p:multiply s b) %h m)
+                (values
+                 %g %h
+                 (fpx:modulo (p:subtract s d) m)
+                 (fpx:modulo (p:subtract p (p:multiply p b) (p:multiply c %g)) m)))))))
+
+(sera:-> lift-factors (p:polynomial p:polynomial p:polynomial u:prime)
+         (values p:polynomial p:polynomial boolean &optional))
+(defun lift-factors (f g h q)
   "For a primitive polynomial \\(f \\in \\mathbb{Z}[x]\\) with leading
-coefficient > 0 and \\(f_1, f_2 \\in \\mathbb{Z}_p[x]\\), \\(p\\)
-being prime, find polynomials \\(\\hat{f_1}, \\hat{f_2} \\in
-\\mathbb{Z}[x]\\) such that \\(f = \\hat{f_1} \\hat{f_2}\\) if \\(f =
-f_1 f_2 \\mod p\\). \\(d\\) is a maximal absolute value of
-coefficients in \\(f\\) or its factors.
+coefficient > 0 and \\(g, h \\in \\mathbb{Z}_q[x]\\) find polynomials
+\\(\\hat{g}, \\hat{h} \\in \\mathbb{Z}[x]\\) such that \\(f = \\hat{g}
+\\hat{h}\\) if \\(f = g h \\mod q\\).
 
 The first two values returned are the desired factors. The third value
 is a boolean being equal to @c(T) if the algorithm has successfully
 found a solution in \\(\\mathbb{Z}[x]\\). If this value is @c(NIL)
-then the algorithm is not successful and \\(f = \\hat{f_1} \\hat{f_2}
-\\mod p^N\\) where \\(N\\) is the forth returned value."
-  ;; This algorithm is called the linear Hensel lifting. Having the
-  ;; factorization in ℤ_{p^k}[x] it finds the factorization in
-  ;; ℤ_{p^{k+1}}[x] until the factorization in ℤ[x] is found or a
-  ;; limit of iterations is reached.
-
+the first two values can be ignored."
   ;; KLUDGE: Check that leading coefficient is > 0. Otherwise
   ;; factorization will be incorrect by -1 multiple.
+  ;; FIXME: Is it still true?
   (unless (> (p:leading-coeff f) 0)
     (error "Leading coefficient < 0: ~a" f))
   (let* ((lc (p:leading-coeff f))
-         ;; p^max-steps > 2D*lc must hold
-         (max-steps (1+ (ceiling (log (abs (* 2 d lc)) p))))
-         ;; Adjust f, f1 and f2 to correctly solve non-monic case
-         ;; f ∈ ℤ[x], f₁, f₂ ∈ ℤ_p[x]
-         (f  (identity (p:scale f  (* lc))))
-         (f1 (fpx:modulo (p:scale f1 (* lc (u:invert-integer (p:leading-coeff f1) p))) p))
-         (f2 (fpx:modulo (p:scale f2 (* lc (u:invert-integer (p:leading-coeff f2) p))) p)))
-    (multiple-value-bind (gcd s d)
-        (fpx:gcdex f1 f2 p)
+         (f (p:scale f lc))
+         (g (fix-unit g lc q))
+         (h (fix-unit h lc q)))
+    (multiple-value-bind (gcd s p)
+        (fpx:gcdex g h q)
       (declare (ignore gcd))
-      (labels ((%lift-factors (%f1 %f2 q step)
-                 (let* ((%f1 (replace-lc %f1 lc))
-                        (%f2 (replace-lc %f2 lc))
-                        (prod (p:multiply %f1 %f2))
-                        (diff (p:subtract f prod)))
-                   (if (or (p:polynomial= diff p:+zero+)
-                           (= step max-steps))
-                       (values (remove-content %f1)
-                               (remove-content %f2)
-                               (p:polynomial= diff p:+zero+)
-                               step)
-                       (let* ((rhs (scale-divide diff q))
-                              (%δf2 (fpx:modulo (p:multiply s rhs) p))
-                              (%δf1 (fpx:modulo (p:multiply d rhs) p)))
-                         (multiple-value-bind (quo δf2)
-                             (fpx:divide %δf2 %f2 p)
-                           (let ((δf1 (fpx:modulo (p:add (p:multiply %f1 quo) %δf1) p)))
-                             (%lift-factors (p:add %f1 (p:scale δf1 q))
-                                            (p:add %f2 (p:scale δf2 q))
-                                            (* p q)
-                                            (1+ step)))))))))
-        (%lift-factors f1 f2 p 0)))))
+      (let ((bound (* 2 (suitable-bound f))))
+        (labels ((%lf (g h s p q)
+                   (let ((g (replace-lc g lc))
+                         (h (replace-lc h lc))
+                         (convp (p:polynomial= f (p:multiply g h))))
+                     (if (or (> q bound) convp)
+                         (values (remove-content g)
+                                 (remove-content h)
+                                 convp)
+                         (let ((q (expt q 2)))
+                           (multiple-value-bind (g h s p)
+                               (lifting-step f g h s p q)
+                             (%lf g h s p q)))))))
+          (%lf g h s p q))))))
 
 (sera:-> suitable-primes (p:polynomial)
          (values si:iterator &optional))
@@ -165,7 +172,7 @@ in \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
     (multiple-value-bind (p f)
         (find-prime (suitable-primes polynomial))
       (labels ((lift-factor (f f1 f2)
-                 (lift-factors f f1 f2 p (suitable-bound f)))
+                 (lift-factors f f1 f2 p))
                (try-combinations (f combs acc all-factors)
                  ;; F ∈ ℤ[x]. Here ALL-FACTORS is a list of factors of F mod P and COMB
                  ;; contain all combinations of N elements from ALL-FACTORS. For example,

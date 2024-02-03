@@ -39,19 +39,19 @@
 ;; fields. ZX:LIFT-FACTORS *REQUIRES* integers here.
 (sera:-> mod-sym (integer prime-power)
          (values integer &optional))
-(defun mod-sym (x n)
-  "Compute \\(x \\mod n\\). The result is in a range \\(0 \\dots 1\\)
-if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."
-  (let ((mod (mod x n))
-        (half (floor n 2)))
-    (if (or (= n 2)
+(defun mod-sym (n q)
+  "Compute \\(n \\mod q\\). The result is in a range \\(0 \\dots 1\\)
+if \\(q = 2\\) or \\(-(q-1)/2 \\dots (q-1)/2\\) if \\(q > 2\\)."
+  (let ((mod (mod n q))
+        (half (floor q 2)))
+    (if (or (= q 2)
             (<= mod half))
-        mod (- mod n))))
+        mod (- mod q))))
 
 (sera:-> gcdex (integer integer)
          (values integer integer integer &optional))
 (defun gcdex (u v)
-  "For \\(u, v \in \mathbb{Z}\\) find \\(\\gcd(u,v)\\) and solutions
+  "For \\(u, v \\in \\mathbb{Z}\\) find \\(\\gcd(u,v)\\) and solutions
 of an equation \\(au + bv = \\gcd(u,v)\\) with minimal absolute
 values."
   (cond

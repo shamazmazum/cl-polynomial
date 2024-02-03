@@ -8,6 +8,7 @@
            #:degree
            #:monomial
 
+           #:gcdex
            #:mod-sym
            #:invert-integer
            #:bind-monomial))
@@ -44,31 +45,49 @@ if \\(n = 2\\) or \\(-(n-1)/2 \\dots (n-1)/2\\) if \\(n > 2\\)."
             (<= mod half))
         mod (- mod n))))
 
-(sera:-> expt-rem (fixnum alex:non-negative-fixnum prime)
-         (values fixnum &optional))
-(defun expt-rem (x n p)
-  "Calculate \\(x^n \\mod p\\) with \\(n \\ge 0\\)."
-  (declare (optimize (speed 3)))
-  (labels ((%expt-rem (x n acc)
-             (declare (type alex:non-negative-fixnum n)
-                      (type fixnum x acc))
-             (cond
-               ((zerop n) acc)
-               ((evenp n)
-                (%expt-rem (mod-sym (* x x) p) (floor n 2) acc))
-               (t
-                (%expt-rem x (1- n) (mod-sym (* acc x) p))))))
-    (%expt-rem x n 1)))
+(sera:-> gcdex (integer integer)
+         (values integer integer integer &optional))
+(defun gcdex (u v)
+  "For \\(u, v \in \mathbb{Z}\\) find \\(\\gcd(u,v)\\) and solutions
+of an equation \\(au + bv = \\gcd(u,v)\\) with minimal absolute
+values."
+  (cond
+    ((zerop u)
+     (values (abs v) 0 (signum v)))
+    ((zerop v)
+     (values (abs u) (signum u) 0))
+    (t
+     (labels ((%gcd (u v s0 s1 d0 d1)
+                (multiple-value-bind (q r)
+                    (round u v)
+                  (let ((s (- s0 (* q s1)))
+                        (d (- d0 (* q d1))))
+                    (if (zerop r)
+                        (values (abs v)
+                                (* (signum v) s1)
+                                (* (signum v) d1))
+                        (%gcd v r s1 s d1 d))))))
+       (if (> (abs u) (abs v))
+           (%gcd u v 1 0 0 1)
+           (multiple-value-bind (gcd s d)
+               (%gcd v u 1 0 0 1)
+             (values gcd d s)))))))
 
-(sera:-> invert-integer (fixnum prime)
-         (values fixnum &optional))
+;; TODO: Update docs and types: works for any ring if the inverse exists.
+(sera:-> invert-integer (integer prime)
+         (values integer &optional))
 (declaim (inline invert-integer))
 (defun invert-integer (n p)
   "Find a multiplicative inverse of \\(n\\) in \\(\\mathbb{F}_p\\), p
 being prime, i.e. find \\(x\\) such that \\(xn = nx = 1\\)."
-  (declare (optimize (speed 3)))
-  ;; Remember that n^p = n
-  (expt-rem n (- p 2) p))
+  (when (zerop n)
+    (error "Zero does not have a multiplicative inverse"))
+  (multiple-value-bind (gcd a b)
+      (gcdex n p)
+    (declare (ignore b))
+    (when (/= gcd 1)
+      (error "N does not have a multiplicative inverse: N is not coprime with P"))
+    (mod-sym a p)))
 
 ;; Like destructuring-bind, but without additional checks
 (defmacro bind-monomial ((deg coeff) monomial &body body)

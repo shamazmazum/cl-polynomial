@@ -39,6 +39,7 @@ EXAMPLE> (zx:factor *)
      @cl:with-package[name="cl-polynomial/util"](
        @cl:doc(function mod-sym)
        @cl:doc(function invert-integer)
+       @cl:doc(function gcdex)
      )
    @end(section)
    @begin(section)

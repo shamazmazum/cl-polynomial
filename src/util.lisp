@@ -44,8 +44,7 @@
 if \\(q = 2\\) or \\(-(q-1)/2 \\dots (q-1)/2\\) if \\(q > 2\\)."
   (let ((mod (mod n q))
         (half (floor q 2)))
-    (if (or (= q 2)
-            (<= mod half))
+    (if (<= mod half)
         mod (- mod q))))
 
 (sera:-> gcdex (integer integer)

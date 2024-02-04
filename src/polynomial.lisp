@@ -146,37 +146,28 @@ of @c(list->polynomial)."
 (sera:-> %add (polynomial polynomial)
          (values polynomial &optional))
 (defun %add (poly1 poly2)
+  (declare (optimize (speed 3)))
   ;; Polynomials coefficients are stored in a assoc list sorted by
   ;; power of X, so we need to compare heads of two lists when adding
   ;; two polynomials.
-  (declare (optimize (speed 3)))
-  (labels ((collect-coeffs (acc ms1 ms2)
+  (labels ((%do (ms1 ms2)
              (cond
-               ((null ms1)
-                (append (reverse ms2) acc))
-               ((null ms2)
-                (append (reverse ms1) acc))
+               ((null ms1) ms2)
+               ((null ms2) ms1)
                (t
                 (u:bind-monomial (d1 c1) (car ms1)
                   (u:bind-monomial (d2 c2) (car ms2)
                     (cond
                       ((> d1 d2)
-                       (collect-coeffs (cons (cons d1 c1) acc)
-                                       (cdr ms1) ms2))
+                       (cons (car ms1) (%do (cdr ms1) ms2)))
                       ((> d2 d1)
-                       (collect-coeffs (cons (cons d2 c2) acc)
-                                       (cdr ms2) ms1))
+                       (cons (car ms2) (%do ms1 (cdr ms2))))
                       (t
                        (let ((sum (+ c1 c2)))
-                         (collect-coeffs (if (zerop sum)
-                                             acc (cons (cons d1 (+ c1 c2)) acc))
-                                         (cdr ms1) (cdr ms2)))))))))))
-    (polynomial
-     (reverse
-      (collect-coeffs
-       nil
-       (polynomial-coeffs poly1)
-       (polynomial-coeffs poly2))))))
+                         (if (zerop sum)
+                             (%do (cdr ms1) (cdr ms2))
+                             (cons (cons d1 sum) (%do (cdr ms1) (cdr ms2)))))))))))))
+    (polynomial (%do (polynomial-coeffs poly1) (polynomial-coeffs poly2)))))
                     
 (sera:-> add (&rest polynomial)
          (values polynomial &optional))

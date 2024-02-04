@@ -300,16 +300,14 @@ factors."
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
 
-(sera:-> expt-rem (p:polynomial alex:non-negative-fixnum p:polynomial u:prime)
+(sera:-> expt-rem (p:polynomial integer p:polynomial u:prime)
          (values p:polynomial &optional))
 (defun expt-rem (f n g p)
   "Calculate \\(f^n(x) \\mod g(x)\\) for a non-negative integer
 \\(n\\) and \\(f,g \\in \\mathbb{F}_p[x]\\)."
-  (declare (optimize (speed 3)))
   (labels ((mul-rem (f1 f2)
              (remainder (modulo (p:multiply f1 f2) p) g p))
            (%expt-rem (f n acc)
-             (declare (type alex:non-negative-fixnum n))
              (cond
                ((zerop n) acc)
                ((evenp n)

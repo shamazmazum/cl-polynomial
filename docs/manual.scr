@@ -46,6 +46,7 @@ EXAMPLE> (zx:factor *)
      @title(Basic operations on polynomials (@c(cl-polynomial/polynomial)))
      @cl:with-package[name="cl-polynomial/polynomial"](
        @cl:doc(function list->polynomial)
+       @cl:doc(function monomials->polynomial)
        @cl:doc(function sequence->polynomial)
        @cl:doc(function polynomial->list)
        @cl:doc(function polynomial=)

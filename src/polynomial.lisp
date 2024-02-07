@@ -16,6 +16,7 @@
            #:polynomial-coeffs
            #:leading-coeff
            #:list->polynomial
+           #:monomials->polynomial
            #:sequence->polynomial
            #:polynomial->list
            #:positive-lc
@@ -35,6 +36,18 @@
 (defstruct (polynomial
              (:constructor polynomial (coeffs)))
   (coeffs nil :type list :read-only t))
+
+(sera:-> monomials->polynomial (list)
+         (values polynomial &optional))
+(defun monomials->polynomial (list)
+  "Convert a list of monomials in the form @c((degree . coefficient))
+to a polynomial. A list must not contain two monomials of the same
+degree."
+  (when (/= (length list)
+            (length (remove-duplicates list :key #'car :test #'=)))
+    (error "A list contains monomials of the same degree"))
+  (polynomial
+   (sort (copy-list list) #'> :key #'car)))
 
 (sera:-> polynomial= (polynomial polynomial)
          (values boolean &optional))

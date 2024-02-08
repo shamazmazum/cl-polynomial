@@ -90,7 +90,7 @@ EXAMPLE> (zx:factor *)
    @begin(section)
      @title(Factorization in \(\mathbb{Z}[x]\) (@c(cl-polynomial/zx)))
      @cl:with-package[name="cl-polynomial/zx"](
-       @cl:doc(function suitable-primes)
+       @cl:doc(function suitable-prime)
        @cl:doc(function remove-content)
        @cl:doc(function lift-factors)
        @cl:doc(function gcd)

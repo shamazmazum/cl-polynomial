@@ -45,6 +45,15 @@
         (cons 1 f)))
     (fpx:square-free polynomial prime))))
 
+(defun make-square-free-zx (polynomial)
+  (ratsimp
+   (mapcar
+    (lambda (factor)
+      (destructuring-bind (m . f) factor
+        (declare (ignore m))
+        (cons 1 f)))
+    (zx:square-free polynomial))))
+
 (defun set-equal-p (s1 s2)
   (and (subsetp s1 s2 :test #'equalp)
        (subsetp s2 s1 :test #'equalp)))
@@ -287,25 +296,15 @@
 (test lifting
   (loop with state = (make-random-state t)
         repeat 400000 do
-        (let* (;; Generate a random primitive polynomial
-               (poly (zx:remove-content (random-poly 20 state 10)))
-               ;; Make sure that the leading coefficient is > 0
-               (poly (if (< (p:leading-coeff poly) 0) (p:negate poly) poly)))
-          (unless (p:polynomial= poly p:+zero+)
-            (let* ((prime (si:consume-one (zx:suitable-primes poly)))
-                   ;; Constant multiplier in the factorization in
-                   ;; 𝔽_p[x] can be ignored.
-                   (factors (fpx:factor (fpx:modulo poly prime) prime)))
-              ;; For simplicity choose a situation with only 2 factors
-              (when (= (length factors) 2)
-                (destructuring-bind ((m1 . f1) (m2 . f2)) factors
-                  (when (= m1 m2 1)
-                    (multiple-value-bind (f1zx f2zx convp steps)
-                        (zx:lift-factors poly f1 f2 prime)
-                      (declare (ignore steps))
-                      ;; When a factorization in ℤ[x] exists...
-                      (when convp
-                        (is (p:polynomial= poly (p:multiply f1zx f2zx)))))))))))))
+        ;; Generate a random square-free monic polynomial
+        (let* ((poly (make-square-free-zx
+                      (p:add (random-poly 20 state 10) (p:polynomial '((10 . 1))))))
+               (prime (zx:suitable-prime poly))
+               (fpx-factors (mapcar #'cdr (fpx:factor (fpx:modulo poly prime) prime)))
+               (lifting-steps (nth-value 1 (zx:suitable-bound poly prime)))
+               (lifted-factors (zx:lift-factors poly fpx-factors prime lifting-steps)))
+          (is (p:polynomial= poly (fpx:modulo (apply #'p:multiply lifted-factors)
+                                              (expt prime (expt 2 lifting-steps))))))))
 
 (test square-free-zx
   (loop with state = (make-random-state t)

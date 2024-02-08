@@ -29,8 +29,7 @@
            #:monicp
            #:constantp
            #:derivative
-           #:expt
-           #:evaluate))
+           #:expt))
 (in-package :cl-polynomial/polynomial)
 
 (defstruct (polynomial

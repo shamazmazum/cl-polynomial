@@ -8,6 +8,7 @@
                     (#:primes #:cl-prime-maker)
                     (#:u      #:cl-polynomial/util)
                     (#:p      #:cl-polynomial/polynomial)
+                    (#:z      #:cl-polynomial/z)
                     (#:fpx    #:cl-polynomial/fpx))
   (:export #:lift-factors
            #:remove-content
@@ -18,7 +19,8 @@
            #:gcd
            #:square-free
            #:factor
-           #:irreduciblep))
+           #:irreduciblep
+           #:cyclotomic))
 (in-package :cl-polynomial/zx)
 
 (sera:-> scale-divide (p:polynomial integer)
@@ -340,3 +342,22 @@ multiplied by a second returned value."
           (and (null rest)
                (= m 1)
                (= (length (factor p)) 1))))))
+
+(sera:-> cyclotomic ((integer 1))
+         (values p:polynomial &optional))
+(defun cyclotomic (n)
+  "Get n-th cyclotomic polynomial in \\(\\mathbb{Z}[x]\\)."
+  (labels ((%cyclotomic (acc-m acc-d m)
+             (if (> m n) (values acc-m acc-d)
+                 (multiple-value-bind (q r)
+                     (floor n m)
+                   (if (zerop r)
+                       (let ((p (p:polynomial (list (cons m 1) '(0 . -1)))))
+                         (case (z:moebius q)
+                           ( 0 (%cyclotomic acc-m acc-d (1+ m)))
+                           ( 1 (%cyclotomic (p:multiply acc-m p) acc-d (1+ m)))
+                           (-1 (%cyclotomic acc-m (p:multiply acc-d p) (1+ m)))))
+                       (%cyclotomic acc-m acc-d (1+ m)))))))
+    (multiple-value-bind (m d)
+        (%cyclotomic p:+one+ p:+one+ 1)
+      (nth-value 0 (divide m d)))))

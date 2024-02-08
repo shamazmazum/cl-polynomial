@@ -14,6 +14,7 @@
                  :cl-polynomial/util
                  :cl-polynomial/linalg
                  :cl-polynomial/polynomial
+                 :cl-polynomial/z
                  :cl-polynomial/fpx
                  :cl-polynomial/zx)
     :in-order-to ((test-op (load-op "cl-polynomial/tests")))

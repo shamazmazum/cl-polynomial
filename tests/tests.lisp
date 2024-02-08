@@ -9,7 +9,7 @@
                    (let ((status (run suite)))
                      (explain! status)
                      (results-status status)))
-                 '(algebra factor))))
+                 '(number algebra factor))))
 
 (defun coeffs-sorted-p (polynomial)
   (let* ((coeffs (p:polynomial-coeffs polynomial))
@@ -49,8 +49,54 @@
   (and (subsetp s1 s2 :test #'equalp)
        (subsetp s2 s1 :test #'equalp)))
 
+(defun factor-x^n-1 (n)
+  (si:foldl
+   (lambda (acc m)
+     (if (zerop (rem n m)) (cons (zx:cyclotomic m) acc) acc))
+   nil (si:range 1 (1+ n))))
+
+(def-suite number  :description "Basic number-theoretic functions")
 (def-suite algebra :description "Generic algebraic operations on polynomials")
 (def-suite factor  :description "Factorization of polynomials over finite fields")
+
+(in-suite number)
+
+(test factor-numbers
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let* ((number (random 100000))
+               (factors (z:factor number)))
+          (is (= number (reduce #'* factors)))
+          (is-true
+           (every
+            (lambda (number)
+              (= (length (z:factor number)) 1))
+            factors)))))
+
+(test totient
+  (loop with state = (make-random-state t)
+        repeat 1000 do
+        (let ((n1 (random 500))
+              (n2 (random 500)))
+          (when (= (gcd n1 n2) 1)
+            (is (= (* (z:totient n1) (z:totient n2))
+                   (z:totient (* n1 n2)))))
+          (is (= (loop for i from 1 to n1 sum
+                       (if (zerop (rem n1 i)) (z:totient i) 0))
+                 n1)))))
+
+(test moebius
+  (loop with state = (make-random-state t)
+        repeat 1000 do
+        (let ((n1 (random 500))
+              (n2 (random 500)))
+          (when (= (gcd n1 n2) 1)
+            (is (= (* (z:moebius n1) (z:moebius n2))
+                   (z:moebius (* n1 n2)))))
+          (when (> n1 1)
+            (is (= (loop for i from 1 to n1 sum
+                         (if (zerop (rem n1 i)) (z:moebius i) 0))
+                   0))))))
 
 (in-suite algebra)
 
@@ -287,3 +333,10 @@
                    (p:scale (ratsimp factors) c)
                    polynomial))
               (is-true (every (alex:compose #'zx:irreduciblep #'cdr) factors)))))))
+
+(test factor-cyclotomic
+  (loop for n from 1 to 50 #+nil 100 do
+        (let ((factors1 (factor-x^n-1 n))
+              (factors2 (zx:factor (p:polynomial (list (cons n 1) '(0 . -1))))))
+          (is-true (every (lambda (f) (= (car f) 1)) factors2))
+          (is (set-equal-p factors1 (mapcar #'cdr factors2))))))

@@ -97,6 +97,17 @@ EXAMPLE> (zx:factor *)
        @cl:doc(function square-free)
        @cl:doc(function factor)
        @cl:doc(function irreduciblep)
+       @cl:doc(function cyclotomic)
+     )
+   @end(section)
+   @begin(section)
+     @title(Auxiliary number-theoretic functions)
+     These functions are rather slow and are used only in testing of the main
+     part of this library.
+     @cl:with-package[name="cl-polynomial/z"](
+       @cl:doc(function factor)
+       @cl:doc(function totient)
+       @cl:doc(function moebius)
      )
    @end(section)
 @end(section)

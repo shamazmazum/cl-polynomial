@@ -128,7 +128,7 @@ lift these factors to \\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
                        (= (caar sf-factors) 1)))))
          (si:imap
           (lambda (n) (primes:get-nth-prime n))
-          (si:count-from 2)))))))
+          (si:count-from 1)))))))
 
 (sera:-> suitable-bound (p:polynomial u:prime)
          (values (integer 1) (integer 0) &optional))

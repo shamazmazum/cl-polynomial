@@ -5,7 +5,6 @@
   (:shadow #:gcd)
   (:local-nicknames (#:sera   #:serapeum)
                     (#:si     #:stateless-iterators)
-                    (#:primes #:cl-prime-maker)
                     (#:u      #:cl-polynomial/util)
                     (#:p      #:cl-polynomial/polynomial)
                     (#:z      #:cl-polynomial/z)
@@ -126,9 +125,7 @@ lift these factors to \\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
                 (let ((sf-factors (fpx:square-free (fpx:modulo polynomial prime) prime)))
                   (and (= (length sf-factors) 1)
                        (= (caar sf-factors) 1)))))
-         (si:imap
-          (lambda (n) (primes:get-nth-prime n))
-          (si:count-from 1)))))))
+         z:*prime-source*)))))
 
 (sera:-> suitable-bound (p:polynomial u:prime)
          (values (integer 1) (integer 0) &optional))

@@ -10,7 +10,6 @@
     :depends-on (:alexandria
                  :serapeum
                  :stateless-iterators
-                 :cl-prime-maker
                  :cl-polynomial/util
                  :cl-polynomial/linalg
                  :cl-polynomial/polynomial

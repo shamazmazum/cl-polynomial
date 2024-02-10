@@ -235,6 +235,8 @@ factors of \\(f\\) in the form \\(p^{2^n}\\) and a corresponding
 (defun remainder (poly1 poly2)
   (nth-value 1 (divide poly1 poly2)))
 
+;; https://en.wikipedia.org/wiki/Polynomial_greatest_common_divisor#Subresultant_pseudo-remainder_sequence
+
 (sera:-> gcd-primitive (p:polynomial p:polynomial)
          (values p:polynomial &optional))
 (defun gcd-primitive (poly1 poly2)

@@ -75,9 +75,6 @@ m\\), find \\(g^*, h^*, s^*, p^*\\), so that \\(s^*g^* + p^*h^* = 1
 coefficient > 0 and two relatively prime polynomials \\(g, h \\in
 \\mathbb{F}_p[x]\\) find \\(g^*, h^* \\in \\mathbb{Z}_{p^{2^n}}[x]\\)
 such that \\(f = g^* h^* \\mod p^{2^n}\\) if \\(f = g h \\mod p\\)."
-  ;; KLUDGE: Check that leading coefficient is > 0. Otherwise
-  ;; factorization will be incorrect by -1 multiple.
-  ;; FIXME: Is it still true?
   (unless (= (p:leading-coeff f) 1)
     (error "Leading coefficient ≠ 1: ~a" f))
   (multiple-value-bind (gcd s d)
@@ -115,7 +112,10 @@ lift these factors to \\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
   "Return a suitable prime for reducing a factorization in
 \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (assert (not (p:polynomial= polynomial p:+zero+)))
-  ;; A suitable prime is the first prime which does not divide LC
+  ;; Find a suitable prime which does not divide the leading
+  ;; coefficient and provides a square-free factorization in a finite
+  ;; field (this factorization exists because POLYNOMIAL itself is
+  ;; square-free).
   (let ((lc (p:leading-coeff polynomial)))
     (nth-value
      0 (si:consume-one
@@ -127,16 +127,13 @@ lift these factors to \\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
                        (= (caar sf-factors) 1)))))
          z:*prime-source*)))))
 
+;; https://en.wikipedia.org/wiki/Landau-Mignotte_bound
 (sera:-> suitable-bound (p:polynomial u:prime)
          (values (integer 1) (integer 0) &optional))
 (defun suitable-bound (f p)
   "Return a suitable bound for absolute values of coefficients of
 factors of \\(f\\) in the form \\(p^{2^n}\\) and a corresponding
 \\(n\\)."
-  ;; Find a suitable prime which does not divide the leading
-  ;; coefficient and provides a square-free factorization in a finite
-  ;; field (this factorization exists because POLYNOMIAL itself is
-  ;; square-free).
   (let* ((degree (p:degree f))
          (mignotte-bound (* 2 (sqrt (1+ degree))
                             (expt 2 degree)

@@ -4,6 +4,7 @@
   (:use #:cl)
   (:shadow #:gcd)
   (:local-nicknames (#:sera   #:serapeum)
+                    (#:alex   #:alexandria)
                     (#:si     #:stateless-iterators)
                     (#:u      #:cl-polynomial/util)
                     (#:p      #:cl-polynomial/polynomial)
@@ -154,41 +155,41 @@ factors of \\(f\\) in the form \\(p^{2^n}\\) and a corresponding
             (combinations (cdr list) n)))))
 
 (defun factor-square-free (polynomial)
+  (declare (optimize (speed 3)))
   ;; Polynomial must be content-free and square-free
   (labels ((restore-factor (comb f q)
              (remove-content
               (fpx:modulo (p:scale (apply #'p:multiply comb) (p:leading-coeff f)) q)))
-           (try-combinations (f combs acc all-factors q)
-             ;; F ∈ ℤ[x]. Here ALL-FACTORS is a list of factors of F mod Q and
-             ;; COMB contain all combinations of N elements from ALL-FACTORS. For
-             ;; example, F mod P factors like `abcd` and COMB contains
-             ;; combinations of 2 elements. Then COMB is equal to `((ab) (ac) (ad)
-             ;; (bc) (bd) (cd))`. Each combination is tested if it divides F. If
-             ;; it does, it is removed from ALL-FACTORS and RECOMBINE is called
-             ;; again with F/∏COMB and ALL-FACTORS \ COMB.  This function does not
-             ;; return anything useful because RECOMBINE jumps directly to the end
-             ;; of FACTOR-SQUARE-FREE.
-             (when combs
-               (let* ((c1 (car combs))
-                      (c2 (set-difference all-factors c1 :test #'p:polynomial=))
-                      (f1 (restore-factor c1 f q))
-                      (f2 (restore-factor c2 f q)))
-                 (if (p:polynomial= f (p:multiply f1 f2))
-                     (recombine f2 c2 (cons f1 acc) (length c1) q)
-                     (try-combinations f (cdr combs) acc all-factors q)))))
-           (recombine (f factors acc i q)
-             ;; F ∈ ℤ[x]. Generate combinations from factors of F mod Q and try to
-             ;; detect products of which combinations are the factors of F. For
-             ;; example, suppose F mod Q factors as abcd, where a,b,c and d ∈
-             ;; 𝔽_q[x].  Firstly combinations (a) (b) (c) and (d) are constructed
-             ;; and we check if they are factors of F. If we are not successful,
-             ;; combinations (ab) (ac) ... (cd) are constructed and checked for
-             ;; being the factors.
-             (try-combinations f (combinations factors i) acc factors q)
-             (if (or (p:polynomial= f p:+one+)
-                     (= i (length factors)))
-                 (return-from factor-square-free acc)
-                 (recombine f factors acc (1+ i) q))))
+           (try-combinations (f combs all-factors comb-length q)
+             (declare (type alex:positive-fixnum comb-length))
+             ;; F ∈ ℤ[x]. Here ALL-FACTORS is a list of factors of F mod Q in ℤ_q[x] and
+             ;; COMB contain all combinations of COMB-LENGTH elements from
+             ;; ALL-FACTORS. For example, F mod P factors like `abcd` and COMB contains
+             ;; combinations of 2 elements. Then COMB is equal to `((ab) (ac) (ad) (bc)
+             ;; (bd) (cd))`. Each combination is tested if it divides F. If it does, it is
+             ;; removed from ALL-FACTORS and a newly found "true" factor is returned.
+             (if (null combs)
+                 (values f all-factors (1+ comb-length))
+                 (let* ((c1 (car combs))
+                        (c2 (set-difference all-factors c1 :test #'p:polynomial=))
+                        (f1 (restore-factor c1 f q))
+                        (f2 (restore-factor c2 f q)))
+                   (if (p:polynomial= f (p:multiply f1 f2))
+                       (values f2 c2 comb-length f1)
+                       (try-combinations f (cdr combs) all-factors comb-length q)))))
+           (recombine (f factors acc comb-length q)
+             ;; F ∈ ℤ[x]. Generate combinations from factors of F mod Q in ℤ_q[x] and try
+             ;; to detect products of which combinations are the factors of F in ℤ[x]. For
+             ;; example, suppose F mod Q factors as abcd, where a,b,c and d ∈ ℤ_q[x].
+             ;; Firstly combinations (a) (b) (c) and (d) are constructed and we check if
+             ;; they are factors of F. If we are not successful, combinations (ab) (ac)
+             ;; ... (cd) are constructed and checked for being the factors.
+             (multiple-value-bind (f factors comb-length maybe-factor)
+                 (try-combinations
+                  f (combinations factors comb-length) factors comb-length q)
+               (let ((acc (if maybe-factor (cons maybe-factor acc) acc)))
+                 (if (p:polynomial= f p:+one+) acc
+                     (recombine f factors acc comb-length q))))))
     (let ((p (suitable-prime polynomial)))
       (multiple-value-bind (q n)
           (suitable-bound polynomial p)

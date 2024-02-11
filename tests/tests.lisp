@@ -109,6 +109,25 @@
 
 (in-suite algebra)
 
+(test mod-sym-homomorphism
+  (loop for p in '(2 3 5 7) do
+        (loop for n in '(1 2 3 4) do
+              (let ((x1 (1+ (random 1000)))
+                    (x2 (1+ (random 1000)))
+                    (q (expt p n)))
+                (is (= (u:mod-sym 0 q) 0))
+                (is (= (u:mod-sym 1 q) 1))
+                (is (= (u:mod-sym (* x1 x2) q)
+                       (u:mod-sym
+                        (* (u:mod-sym x1 q)
+                           (u:mod-sym x2 q))
+                        q)))
+                (is (= (u:mod-sym (+ x1 x2) q)
+                       (u:mod-sym
+                        (+ (u:mod-sym x1 q)
+                           (u:mod-sym x2 q))
+                        q)))))))
+
 (test addition/subtraction
   (loop with state = (make-random-state t)
         repeat 10000 do
@@ -334,7 +353,7 @@
               (is-true (every (alex:compose #'zx:irreduciblep #'cdr) factors)))))))
 
 (test factor-cyclotomic
-  (loop for n from 1 to 50 #+nil 100 do
+  (loop for n from 1 to 100 do
         (let ((factors1 (factor-x^n-1 n))
               (factors2 (zx:factor (p:polynomial (list (cons n 1) '(0 . -1))))))
           (is-true (every (lambda (f) (= (car f) 1)) factors2))

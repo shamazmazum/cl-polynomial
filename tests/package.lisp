@@ -1,6 +1,7 @@
 (defpackage cl-polynomial/tests
   (:use #:cl #:fiveam)
-  (:local-nicknames (#:p    #:cl-polynomial/polynomial)
+  (:local-nicknames (#:u    #:cl-polynomial/util)
+                    (#:p    #:cl-polynomial/polynomial)
                     (#:fpx  #:cl-polynomial/fpx)
                     (#:zx   #:cl-polynomial/zx)
                     (#:z    #:cl-polynomial/z)

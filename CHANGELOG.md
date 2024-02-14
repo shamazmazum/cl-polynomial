@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.2.2
+
+* New feature: POLYNOMIAL/= function which behaves like a composition of NOT and
+  POLYNOMIAL= (saves typing)
+* Improvement: use a new source of primes, suitable for parallel applications.
+* Optimization: Fewer call to the Hensel lifting. Now all lifting is performed
+  before the recombination step.
+* Optimization: Faster POLYNOMIAL= and EXPT.
+
 ## Version 0.2.1
 
 * New feature: Cantor-Zassenhaus algorithm for factorization of polynomials in
@@ -17,7 +26,6 @@
 * Optimization: Addition of polynomials is slightly improved.
 * Improvement: A new constant CL-POLYNOMIAL/POLYNOMIAL:+VARIABLE+ in which the
   polynomial X is stored.
-  
 
 ## Version 0.2
 

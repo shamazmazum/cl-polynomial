@@ -1,6 +1,6 @@
 (defsystem :cl-polynomial
     :name :cl-polynomial
-    :version "0.2.1"
+    :version "0.2.2"
     :author "Vasily Postnicov <shamaz.mazum@gmail.com>"
     :description "Factorization of polynomials over integers and finite fields"
     :license "2-clause BSD"
@@ -23,7 +23,7 @@
 
 (defsystem :cl-polynomial/tests
     :name :cl-polynomial/tests
-    :version "0.2.1"
+    :version "0.2.2"
     :author "Vasily Postnicov <shamaz.mazum@gmail.com>"
     :license "2-clause BSD"
     :serial t

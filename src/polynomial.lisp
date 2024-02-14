@@ -354,9 +354,11 @@ coefficient is positive."
 (defun expt (f n)
   "For polynomial \\(f(x)\\) and a non-negative integer number \\(n\\)
 calculate \\(f^n(x)\\)."
-  (cond
-    ((zerop n) +one+)
-    ((evenp n)
-     (expt (multiply f f) (floor n 2)))
-    (t
-     (multiply f (expt (multiply f f) (floor n 2))))))
+  (labels ((%expt (f n acc)
+             (cond
+               ((zerop n) acc)
+               ((evenp n)
+                (%expt (multiply f f) (floor n 2) acc))
+               (t
+                (%expt f (1- n) (multiply f acc))))))
+    (%expt f n +one+)))

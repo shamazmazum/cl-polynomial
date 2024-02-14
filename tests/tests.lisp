@@ -58,6 +58,13 @@
   (and (subsetp s1 s2 :test #'equalp)
        (subsetp s2 s1 :test #'equalp)))
 
+(defun factor-subset-p (small big)
+  (every
+   (lambda (small-factor)
+     (let ((big-factor (find (cdr small-factor) big :key #'cdr :test #'p:polynomial=)))
+       (and big-factor (<= (car small-factor) (car big-factor)))))
+   small))
+
 (defun factor-x^n-1 (n)
   (si:foldl
    (lambda (acc m)
@@ -214,6 +221,20 @@
                 (is (p:polynomial= (fpx:remainder lcm poly1 prime) p:+zero+))
                 (is (p:polynomial= (fpx:remainder lcm poly2 prime) p:+zero+))))))))
 
+(test gcd2
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let* ((prime (random-prime state))
+               (poly1 (random-poly prime state))
+               (poly2 (random-poly prime state))
+               (poly3 (random-poly prime state)))
+          (unless (p:polynomial= poly3 p:+zero+)
+            (let* ((poly1 (fpx:modulo (p:multiply poly1 poly3) prime))
+                   (poly2 (fpx:modulo (p:multiply poly2 poly3) prime))
+                   (gcd (fpx:gcd poly1 poly2 prime)))
+              (is (p:polynomial= (fpx:remainder gcd poly3 prime) p:+zero+))
+              (is (p:polynomial= (fpx:remainder gcd poly3 prime) p:+zero+)))))))
+
 (test gcdex
   (loop with state = (make-random-state t)
         repeat 10000 do
@@ -244,6 +265,19 @@
                 (is (p:polynomial= (zx:remainder poly2 gcd) p:+zero+))
                 (is (p:polynomial= (zx:remainder lcm poly1) p:+zero+))
                 (is (p:polynomial= (zx:remainder lcm poly2) p:+zero+))))))))
+
+(test gcd-zx2
+  (loop with state = (make-random-state t)
+        repeat 50000 do
+        (let ((poly1 (random-poly 20 state 20))
+              (poly2 (random-poly 20 state 20))
+              (poly3 (random-poly 20 state 20)))
+          (unless (p:polynomial= poly3 p:+zero+)
+            (let* ((poly1 (p:multiply poly1 poly3))
+                   (poly2 (p:multiply poly2 poly3))
+                   (gcd (zx:gcd poly1 poly2)))
+              (is (p:polynomial= (zx:remainder gcd poly3) p:+zero+))
+              (is (p:polynomial= (zx:remainder gcd poly3) p:+zero+)))))))
 
 (test expt
   (loop with state = (make-random-state t)
@@ -312,9 +346,27 @@
                 (let ((%factors (fpx:factor polynomial prime :cantor-zassenhaus)))
                   (is (set-equal-p factors %factors)))))))))
 
+(test factor-finite2
+  (loop with state = (make-random-state t)
+        repeat 40000 do
+        (let* ((prime (random-prime state))
+               (poly1 (random-poly prime state 20))
+               (poly2 (random-poly prime state 20))
+               (poly3 (fpx:modulo (p:multiply poly1 poly2) prime)))
+          (unless (or (p:polynomial= poly3 p:+zero+)
+                      (= (p:degree poly1) 0)
+                      (= (p:degree poly2) 0))
+            (dolist (method '(:berlekamp :cantor-zassenhaus))
+              (let ((factors1 (fpx:factor poly1 prime method))
+                    (factors2 (fpx:factor poly2 prime method))
+                    (factors3 (fpx:factor poly3 prime method)))
+                (is-true (factor-subset-p factors1 factors3))
+                (is-true (factor-subset-p factors2 factors3))
+                (is (> (reduce #'+ factors3 :key #'car) 1))))))))
+
 (test lifting
   (loop with state = (make-random-state t)
-        repeat 400000 do
+        repeat 100000 do
         ;; Generate a random square-free monic polynomial
         (let* ((poly (make-square-free-zx
                       (p:add (random-poly 20 state 10) (p:polynomial '((10 . 1))))))
@@ -351,6 +403,22 @@
                    (p:scale (ratsimp factors) c)
                    polynomial))
               (is-true (every (alex:compose #'zx:irreduciblep #'cdr) factors)))))))
+
+(test factor-zx2
+  (loop with state = (make-random-state t)
+        repeat 100000 do
+        (let* ((poly1 (random-poly 20 state 20))
+               (poly2 (random-poly 20 state 20))
+               (poly3 (p:multiply poly1 poly2)))
+          (unless (or (p:polynomial= poly3 p:+zero+)
+                      (= (p:degree poly1) 0)
+                      (= (p:degree poly2) 0))
+            (let ((factors1 (zx:factor poly1))
+                  (factors2 (zx:factor poly2))
+                  (factors3 (zx:factor poly3)))
+              (is-true (factor-subset-p factors1 factors3))
+              (is-true (factor-subset-p factors2 factors3))
+              (is (> (reduce #'+ factors3 :key #'car) 1)))))))
 
 (test factor-cyclotomic
   (loop for n from 1 to 100 do

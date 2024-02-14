@@ -178,8 +178,8 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
          (values list integer &optional))
 (defun square-free (polynomial p)
   "Perform square-free factorization of a polynomial in
-\\(\\mathbb{F}_p[x]\\), \\(p\\) being prime, with \\(\\deg f > 0\\). A list of
-tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
+\\(\\mathbb{F}_p[x]\\), \\(p\\) being prime. A list of tuples \\((d_i
+. f_i)\\) is returned, so the supplied polynomial is equal to
 \\(\\prod_i f_i^{d_i}\\) multiplied by the second returned value."
   (labels ((%%collect (p1 p2 acc n multiplicity)
              (if (p:polynomial= p2 p:+one+)

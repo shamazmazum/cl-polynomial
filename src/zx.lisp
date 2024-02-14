@@ -93,9 +93,9 @@ such that \\(f = g^* h^* \\mod p^{2^n}\\) if \\(f = g h \\mod p\\)."
 (sera:-> lift-factors (p:polynomial list u:prime (integer 0))
          (values list &optional))
 (defun lift-factors (f gs p n)
-  "For a primitive polynomial \\(f \\in \\mathbb{Z}[x]\\) with leading
-coefficient > 0 and a list of its factors in \\(\\mathbb{F}_p[x]\\),
-lift these factors to \\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
+  "For a monic polynomial \\(f \\in \\mathbb{Z}[x]\\) and a list of
+its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
+\\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
   (unless gs
     (error "The list of factors is empty"))
   (labels ((%lift (f gs acc)

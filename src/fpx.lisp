@@ -105,10 +105,8 @@ This function returns the second value of @c(divide)."
   ;; gcd(0, 0) = 0
   (p:positive-lc
    (cond
-     ((p:polynomial= poly1 p:+zero+)
-      poly2)
-     ((p:polynomial= poly2 p:+zero+)
-      poly1)
+     ((p:polynomial= poly1 p:+zero+) poly2)
+     ((p:polynomial= poly2 p:+zero+) poly1)
      (t
       ;; The rest is the Euclidean algorithm
       (let ((degree1 (p:degree poly1))
@@ -198,8 +196,7 @@ tuples \\((d_i . f_i)\\) is returned, so the supplied polynomial is equal to
                     (w (divide poly gcd p)))
                (multiple-value-bind (%acc rest)
                    (%%collect gcd w acc 1 multiplicity)
-                 (if (p:polynomial= rest p:+one+)
-                     %acc
+                 (if (p:polynomial= rest p:+one+) %acc
                      (%collect (x^pk-case rest p)
                                %acc (* multiplicity p)))))))
     (cond

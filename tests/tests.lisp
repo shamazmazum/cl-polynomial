@@ -135,6 +135,22 @@
                            (u:mod-sym x2 q))
                         q)))))))
 
+(test equality
+  (loop with state = (make-random-state t)
+        repeat 10000 do
+        (let ((poly1 (random-poly 100 state (1+ (random 100))))
+              (poly2 (random-poly 100 state (1+ (random 100)))))
+          (is-true  (p:polynomial=  poly1 poly1))
+          (is-false (p:polynomial/= poly1 poly1))
+          (is-true  (p:polynomial= poly1 (p:polynomial (p:polynomial-coeffs poly1))))
+          (is-false (p:polynomial/= poly1 (p:polynomial (p:polynomial-coeffs poly1))))
+          (when (equalp poly1 poly2)
+            (is-true  (p:polynomial= poly1 poly2))
+            (is-false (p:polynomial/= poly1 poly2)))
+          (when (not (equalp poly1 poly2))
+            (is-true  (p:polynomial/= poly1 poly2))
+            (is-false (p:polynomial= poly1 poly2))))))
+
 (test addition/subtraction
   (loop with state = (make-random-state t)
         repeat 10000 do

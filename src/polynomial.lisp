@@ -9,6 +9,7 @@
                     (#:u    #:cl-polynomial/util))
   (:export #:polynomial
            #:polynomial=
+           #:polynomial/=
            #:+zero+
            #:+one+
            #:+variable+
@@ -52,8 +53,39 @@ degree."
          (values boolean &optional))
 (defun polynomial= (poly1 poly2)
   "Test if two polynomials are equal."
-  (equalp (polynomial-coeffs poly1)
-          (polynomial-coeffs poly2)))
+  (declare (optimize (speed 3)))
+  (or (eq poly1 poly2)
+      (labels ((%= (ms1 ms2)
+                 (cond
+                   ((and (null ms1) (null ms2)) t)
+                   ((or  (null ms1) (null ms2)) nil)
+                   (t
+                    (u:bind-monomial (d1 c1) (car ms1)
+                      (u:bind-monomial (d2 c2) (car ms2)
+                        (if (and (= d1 d2) (= c1 c2))
+                            (%= (cdr ms1) (cdr ms2)))))))))
+        (%=
+         (polynomial-coeffs poly1)
+         (polynomial-coeffs poly2)))))
+
+(sera:-> polynomial/= (polynomial polynomial)
+         (values boolean &optional))
+(defun polynomial/= (poly1 poly2)
+  "Test if two polynomials are not equal."
+  (declare (optimize (speed 3)))
+  (and (not (eq poly1 poly2))
+       (labels ((%/= (ms1 ms2)
+                  (cond
+                    ((and (null ms1) (null ms2)) nil)
+                    ((or (null ms2) (null ms1)) t)
+                    (t
+                     (u:bind-monomial (d1 c1) (car ms1)
+                       (u:bind-monomial (d2 c2) (car ms2)
+                         (if (or (/= d1 d2) (/= c1 c2)) t
+                             (%/= (cdr ms1) (cdr ms2)))))))))
+         (%/=
+          (polynomial-coeffs poly1)
+          (polynomial-coeffs poly2)))))
 
 (sera:-> degree (polynomial)
          (values alex:non-negative-integer &optional))

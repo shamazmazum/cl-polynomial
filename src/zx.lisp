@@ -36,7 +36,7 @@
 part and content."
   (let ((content (reduce
                   (lambda (acc m)
-                    (declare (type u:monomial m))
+                    (declare (type p:monomial m))
                     (cl:gcd acc (cdr m)))
                   (p:polynomial-coeffs f)
                   :initial-value 0)))

@@ -33,7 +33,7 @@ taken modulo @c(q)."
   (p:polynomial
    (reduce
     (lambda (monomial acc)
-      (u:bind-monomial (d c) monomial
+      (p:bind-monomial (d c) monomial
         (let ((c (u:mod-sym c q)))
           (if (zerop c) acc (cons (cons d c) acc)))))
     (p:polynomial-coeffs polynomial)
@@ -60,7 +60,7 @@ are returned as 2 values."
                        (values (p:polynomial (reverse quotient-coeffs))
                                remainder)
                        (let ((remainder-coeffs (p:polynomial-coeffs remainder)))
-                         (u:bind-monomial (d c) (car remainder-coeffs)
+                         (p:bind-monomial (d c) (car remainder-coeffs)
                            (let* ((quotient-degree (- d degree))
                                   (quotient-coeff (u:mod-sym (* c i) p))
                                   (monomial (cons quotient-degree quotient-coeff)))
@@ -169,8 +169,8 @@ and also find a solution of Bezout's equation \\(a p_1 + b p_2 =
   (p:polynomial
    (mapcar
     (lambda (m)
-      (declare (type u:monomial m))
-      (u:bind-monomial (d c) m
+      (declare (type p:monomial m))
+      (p:bind-monomial (d c) m
         (cons (/ d p) c)))
     (p:polynomial-coeffs poly))))
 
@@ -321,7 +321,7 @@ factors."
   (p:polynomial
    (mapcar
     (lambda (monomial)
-      (u:bind-monomial (d c)
+      (p:bind-monomial (d c)
           monomial
         (cons (* d q) c)))
     (p:polynomial-coeffs f))))

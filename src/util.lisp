@@ -7,12 +7,10 @@
            #:prime
            #:prime-power
            #:degree
-           #:monomial
 
            #:gcdex
            #:mod-sym
-           #:invert-integer
-           #:bind-monomial))
+           #:invert-integer))
 (in-package :cl-polynomial/util)
 
 ;; A type for matrices
@@ -29,9 +27,6 @@
 
 ;; A type for degree of a polynomial
 (deftype degree () 'alex:non-negative-fixnum)
-
-;; FIXME: let monomial be just an alias for a tuple?
-(deftype monomial () '(cons degree integer))
 
 ;; Symmetric modulo operation widely used in cl-polynomial instead of
 ;; MOD.
@@ -91,12 +86,3 @@ there is no such inverse."
     (when (/= gcd 1)
       (error "N does not have a multiplicative inverse: N is not coprime with P"))
     (mod-sym a q)))
-
-;; Like destructuring-bind, but without additional checks
-(defmacro bind-monomial ((deg coeff) monomial &body body)
-  (let ((m (gensym)))
-    `(let ((,m ,monomial))
-       (declare (type monomial ,m))
-       (let ((,deg   (car ,m))
-             (,coeff (cdr ,m)))
-         ,@body))))

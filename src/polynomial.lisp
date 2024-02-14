@@ -5,9 +5,11 @@
   (:shadow #:constantp #:expt)
   (:local-nicknames (#:sera #:serapeum)
                     (#:alex #:alexandria)
-                    (#:si   #:stateless-iterators)
-                    (#:u    #:cl-polynomial/util))
-  (:export #:polynomial
+                    (#:u    #:cl-polynomial/util)
+                    (#:si   #:stateless-iterators))
+  (:export #:monomial
+           #:bind-monomial
+           #:polynomial
            #:polynomial=
            #:polynomial/=
            #:+zero+
@@ -32,6 +34,18 @@
            #:derivative
            #:expt))
 (in-package :cl-polynomial/polynomial)
+
+;; FIXME: let monomial be just an alias for a tuple?
+(deftype monomial () '(cons u:degree integer))
+
+;; Like destructuring-bind, but without additional checks
+(defmacro bind-monomial ((deg coeff) monomial &body body)
+  (let ((m (gensym)))
+    `(let ((,m ,monomial))
+       (declare (type monomial ,m))
+       (let ((,deg   (car ,m))
+             (,coeff (cdr ,m)))
+         ,@body))))
 
 (defstruct (polynomial
              (:constructor polynomial (coeffs)))
@@ -60,8 +74,8 @@ degree."
                    ((and (null ms1) (null ms2)) t)
                    ((or  (null ms1) (null ms2)) nil)
                    (t
-                    (u:bind-monomial (d1 c1) (car ms1)
-                      (u:bind-monomial (d2 c2) (car ms2)
+                    (bind-monomial (d1 c1) (car ms1)
+                      (bind-monomial (d2 c2) (car ms2)
                         (if (and (= d1 d2) (= c1 c2))
                             (%= (cdr ms1) (cdr ms2)))))))))
         (%=
@@ -79,8 +93,8 @@ degree."
                     ((and (null ms1) (null ms2)) nil)
                     ((or (null ms2) (null ms1)) t)
                     (t
-                     (u:bind-monomial (d1 c1) (car ms1)
-                       (u:bind-monomial (d2 c2) (car ms2)
+                     (bind-monomial (d1 c1) (car ms1)
+                       (bind-monomial (d2 c2) (car ms2)
                          (if (or (/= d1 d2) (/= c1 c2)) t
                              (%/= (cdr ms1) (cdr ms2)))))))))
          (%/=
@@ -126,8 +140,8 @@ CL-USER> (polynomial:list->polynomial '(1 2))
   (polynomial
    (si:foldl
     (lambda (acc monomial)
-      (declare (type u:monomial monomial))
-      (u:bind-monomial (degree coeff) monomial
+      (declare (type monomial monomial))
+      (bind-monomial (degree coeff) monomial
         (declare (ignore degree))
         (if (zerop coeff) acc (cons monomial acc))))
     nil
@@ -163,10 +177,10 @@ of @c(list->polynomial)."
 (defparameter +variable+ (list->polynomial '(0 1))
   "The polynomial \\(x\\)")
 
-(sera:-> print-monomial (u:monomial boolean stream)
+(sera:-> print-monomial (monomial boolean stream)
          (values &optional))
 (defun print-monomial (monomial firstp stream)
-  (u:bind-monomial (degree coeff) monomial
+  (bind-monomial (degree coeff) monomial
     (unless (zerop coeff)
       (if firstp
           (when (< coeff 0) (princ "- " stream))
@@ -199,8 +213,8 @@ of @c(list->polynomial)."
                ((null ms1) ms2)
                ((null ms2) ms1)
                (t
-                (u:bind-monomial (d1 c1) (car ms1)
-                  (u:bind-monomial (d2 c2) (car ms2)
+                (bind-monomial (d1 c1) (car ms1)
+                  (bind-monomial (d2 c2) (car ms2)
                     (cond
                       ((> d1 d2)
                        (cons (car ms1) (%do (cdr ms1) ms2)))
@@ -238,7 +252,7 @@ This is @c(fmap) for a type @c(data Poly a b = Poly [(a, b)])."
   (polynomial
    (mapcar
     (lambda (m)
-      (u:bind-monomial (d c) m
+      (bind-monomial (d c) m
         (cons d (funcall fn c))))
     (polynomial-coeffs polynomial))))
 
@@ -279,14 +293,14 @@ coefficient is positive."
     (1 `(%add ,polynomial (negate ,(first polynomials))))
     (t whole)))
 
-(sera:-> multiply-monomial (u:monomial polynomial)
+(sera:-> multiply-monomial (monomial polynomial)
          (values polynomial &optional))
 (defun multiply-monomial (monomial polynomial)
-  (u:bind-monomial (d1 c1) monomial
+  (bind-monomial (d1 c1) monomial
     (polynomial
      (mapcar
       (lambda (m)
-        (u:bind-monomial (d2 c2) m
+        (bind-monomial (d2 c2) m
           (cons (+ d1 d2) (* c1 c2))))
       (polynomial-coeffs polynomial)))))
 
@@ -326,7 +340,7 @@ coefficient is positive."
   (polynomial
    (reduce
     (lambda (m acc)
-      (u:bind-monomial (d  c) m
+      (bind-monomial (d  c) m
         (if (zerop d) acc
             (cons
              (cons (1- d) (* d c))

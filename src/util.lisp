@@ -10,7 +10,8 @@
 
            #:gcdex
            #:mod-sym
-           #:invert-integer))
+           #:invert-integer
+           #:root))
 (in-package :cl-polynomial/util)
 
 ;; A type for matrices
@@ -86,3 +87,18 @@ there is no such inverse."
     (when (/= gcd 1)
       (error "N does not have a multiplicative inverse: N is not coprime with P"))
     (mod-sym a q)))
+
+(sera:-> root (alex:non-negative-fixnum alex:positive-fixnum)
+         (values alex:non-negative-fixnum &optional))
+(defun root (x n)
+  "Compute \\(y\\) such that \\(y^n \\le x < (y+1)^n\\)."
+  (declare (optimize (speed 3)))
+  (labels ((%root (%x)
+             (declare (type alex:non-negative-fixnum %x))
+             (let ((new-x (floor (+ (* (1- n) %x) (floor x (expt %x (1- n)))) n)))
+               (if (>= new-x %x) %x (%root new-x)))))
+    (cond
+      ((zerop x) x)
+      ((= n 1) x)
+      ((< x n) 1)
+      (t (%root (floor x n))))))

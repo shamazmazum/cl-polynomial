@@ -69,6 +69,14 @@ m\\), find \\(g^*, h^*, s^*, p^*\\), so that \\(s^*g^* + p^*h^* = 1
                  (fpx:modulo (p:subtract s d) m)
                  (fpx:modulo (p:subtract p (p:multiply p b) (p:multiply c %g)) m)))))))
 
+(sera:-> lifting-steps ((integer 1) u:prime)
+         (values (integer 1) (integer 0) &optional))
+(defun lifting-steps (q p)
+  (labels ((%count (n l)
+             (if (>= l q) (values l n)
+                 (%count (1+ n) (* l l)))))
+    (%count 0 p)))
+
 (sera:-> lift-two-factors (p:polynomial p:polynomial p:polynomial u:prime (integer 0))
          (values p:polynomial p:polynomial &optional))
 (defun lift-two-factors (f g h p n)
@@ -136,12 +144,11 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
 factors of \\(f\\) in the form \\(p^{2^n}\\) and a corresponding
 \\(n\\)."
   (let* ((degree (p:degree f))
-         (mignotte-bound (* 2 (sqrt (1+ degree))
+         (mignotte-bound (* 2 (u:root (1+ degree) 2)
                             (expt 2 degree)
                             (reduce #'max (p:polynomial-coeffs f)
-                                    :key (lambda (x) (abs (cdr x))))))
-         (n (ceiling (log (log mignotte-bound p) 2))))
-    (values (expt p (expt 2 n)) n)))
+                                    :key (lambda (x) (abs (cdr x)))))))
+    (lifting-steps mignotte-bound p)))
 
 (sera:-> combinations (list (integer 0))
          (values list &optional))

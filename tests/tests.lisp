@@ -116,6 +116,14 @@
 
 (in-suite algebra)
 
+(test root
+  (loop repeat 5000 do
+        (let* ((x (random most-positive-fixnum))
+               (k (1+ (random 100)))
+               (root (u:root x k)))
+          (is (<= (expt root k) x))
+          (is (< x (expt (1+ root) k))))))
+
 (test mod-sym-homomorphism
   (loop for p in '(2 3 5 7) do
         (loop for n in '(1 2 3 4) do

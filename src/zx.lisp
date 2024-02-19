@@ -11,6 +11,7 @@
                     (#:z      #:cl-polynomial/z)
                     (#:fpx    #:cl-polynomial/fpx))
   (:export #:lift-factors
+           #:lifting-steps
            #:remove-content
            #:suitable-prime
            #:suitable-bound
@@ -71,10 +72,10 @@ m\\), find \\(g^*, h^*, s^*, p^*\\), so that \\(s^*g^* + p^*h^* = 1
 
 (sera:-> lifting-steps ((integer 1) u:prime)
          (values (integer 1) (integer 0) &optional))
-(defun lifting-steps (q p)
-  (labels ((%count (n l)
-             (if (>= l q) (values l n)
-                 (%count (1+ n) (* l l)))))
+(defun lifting-steps (b p)
+  (labels ((%count (n q)
+             (if (>= q b) (values q n)
+                 (%count (1+ n) (* q q)))))
     (%count 0 p)))
 
 (sera:-> lift-two-factors (p:polynomial p:polynomial p:polynomial u:prime (integer 0))
@@ -137,18 +138,16 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
          z:*prime-source*)))))
 
 ;; https://en.wikipedia.org/wiki/Landau-Mignotte_bound
-(sera:-> suitable-bound (p:polynomial u:prime)
-         (values (integer 1) (integer 0) &optional))
-(defun suitable-bound (f p)
+(sera:-> suitable-bound (p:polynomial)
+         (values (integer 1) &optional))
+(defun suitable-bound (f)
   "Return a suitable bound for absolute values of coefficients of
-factors of \\(f\\) in the form \\(p^{2^n}\\) and a corresponding
-\\(n\\)."
-  (let* ((degree (p:degree f))
-         (mignotte-bound (* 2 (u:root (1+ degree) 2)
-                            (expt 2 degree)
-                            (reduce #'max (p:polynomial-coeffs f)
-                                    :key (lambda (x) (abs (cdr x)))))))
-    (lifting-steps mignotte-bound p)))
+factors of \\(f\\)."
+  (let ((degree (p:degree f)))
+    (* 2 (u:root (1+ degree) 2)
+       (expt 2 degree)
+       (reduce #'max (p:polynomial-coeffs f)
+               :key (lambda (x) (abs (cdr x)))))))
 
 (sera:-> combinations (list (integer 0))
          (values list &optional))
@@ -197,9 +196,10 @@ factors of \\(f\\) in the form \\(p^{2^n}\\) and a corresponding
                (let ((acc (if maybe-factor (cons maybe-factor acc) acc)))
                  (if (p:polynomial= f p:+one+) acc
                      (recombine f factors acc comb-length q))))))
-    (let ((p (suitable-prime polynomial)))
+    (let ((p (suitable-prime polynomial))
+          (b (suitable-bound polynomial)))
       (multiple-value-bind (q n)
-          (suitable-bound polynomial p)
+          (lifting-steps b p)
         (let ((monic-p (fpx:monic-polynomial (fpx:modulo polynomial p) p))
               (monic-q (fpx:monic-polynomial polynomial q)))
           (recombine polynomial (lift-factors monic-q (fpx:berlekamp-factor monic-p p) p n)

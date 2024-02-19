@@ -396,7 +396,7 @@
                       (p:add (random-poly 20 state 10) (p:polynomial '((10 . 1))))))
                (prime (zx:suitable-prime poly))
                (fpx-factors (mapcar #'cdr (fpx:factor (fpx:modulo poly prime) prime)))
-               (lifting-steps (nth-value 1 (zx:suitable-bound poly prime)))
+               (lifting-steps (nth-value 1 (zx:lifting-steps (zx:suitable-bound poly) prime)))
                (lifted-factors (zx:lift-factors poly fpx-factors prime lifting-steps)))
           (is (p:polynomial= poly (fpx:modulo (apply #'p:multiply lifted-factors)
                                               (expt prime (expt 2 lifting-steps))))))))

@@ -144,7 +144,7 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
   "Return a suitable bound for absolute values of coefficients of
 factors of \\(f\\)."
   (let ((degree (p:degree f)))
-    (* 2 (u:root (1+ degree) 2)
+    (* 2 (isqrt (1+ degree))
        (expt 2 degree)
        (reduce #'max (p:polynomial-coeffs f)
                :key (lambda (x) (abs (cdr x)))))))

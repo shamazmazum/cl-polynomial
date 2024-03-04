@@ -17,6 +17,7 @@
 
            #:square-free ; Factorization
            #:distinct-degree
+           #:berlekamp-reduce
            #:berlekamp-factor
            #:reducing-polynomials
            #:irreduciblep
@@ -247,13 +248,12 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
           (and (= m 1)
                (= (length (la:nullspace (berlekamp-matrix f p) p)) 1))))))
 
-(sera:-> berlekamp-factor (p:polynomial u:prime)
+(sera:-> berlekamp-reduce (p:polynomial list u:prime)
          (values list &optional))
-(defun berlekamp-factor (f p)
-  "Given a monic square-free non-constant polynomial, return a list of its
-factors."
-  (let* ((rps (remove p:+one+ (reducing-polynomials f p)
-                      :test #'p:polynomial=))
+(defun berlekamp-reduce (f rps p)
+  "Factor \\(f\\) trying to divide it by \\(f_{rp} - c\\) for
+\\(f_{rp} \\in rps, c \\in \\mathbb{F}_p\\)."
+  (let* ((rps (remove p:+one+ rps :test #'p:polynomial=))
          (nfactors (1+ (length rps))))
     (labels ((constant-poly (c)
                (p:polynomial (list (cons 0 c))))
@@ -294,6 +294,14 @@ factors."
          (if (= (length acc) nfactors) acc
              (collect-factors rp 0 acc)))
        rps :initial-value (list f)))))
+
+(sera:-> berlekamp-factor (p:polynomial u:prime)
+         (values list &optional))
+(declaim (inline berlekamp-factor))
+(defun berlekamp-factor (f p)
+  "Given a monic square-free non-constant polynomial, return a list of its
+factors."
+  (berlekamp-reduce f (reducing-polynomials f p) p))
 
 (sera:-> expt-rem (p:polynomial integer p:polynomial u:prime)
          (values p:polynomial &optional))

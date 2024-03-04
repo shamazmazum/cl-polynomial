@@ -241,9 +241,7 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
          (values boolean &optional))
 (defun irreduciblep (f p)
   "Test if a polynomial \\(f \\in \\mathbb{F}_p[x]\\) is irreducible."
-  (multiple-value-bind (factors c)
-      (square-free f p)
-    (declare (ignore c))
+  (let ((factors (square-free f p)))
     (if (= (length factors) 1)
         (destructuring-bind (m . f) (car factors)
           (and (= m 1)

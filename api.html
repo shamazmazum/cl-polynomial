@@ -78,6 +78,7 @@ degree.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial-&gt;list</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Convert a polynomial to a list of coefficients. This is an inverse
 of <code>list-&gt;polynomial</code>.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial=</code><code class="codex-lambda-list">(poly1 poly2)</code><div class="codex-docstring">Test if two polynomials are equal.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial/=</code><code class="codex-lambda-list">(poly1 poly2)</code><div class="codex-docstring">Test if two polynomials are not equal.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">degree</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return degree of a polynomial</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">leading-coeff</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return the leading coefficient of a polynomial</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">map-poly</code><code class="codex-lambda-list">(fn polynomial)</code><div class="codex-docstring"><p>Given a polynomial \(\sum_n a_n x^n\) return a polynomial
@@ -119,8 +120,8 @@ are returned as 2 values.</div></div>
 and also find a solution of Bezout's equation \(a p_1 + b p_2 =
 \gcd(p_1, p_2)\) with minimal possible degree of \(a\) and
 \(b\).</div></div></p><p>       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">square-free</code><code class="codex-lambda-list">(polynomial p)</code><div class="codex-docstring">Perform square-free factorization of a polynomial in
-\(\mathbb{F}_p[x]\), \(p\) being prime, with \(\deg f &gt; 0\). A list of
-tuples \((d_i . f_i)\) is returned, so the supplied polynomial is equal to
+\(\mathbb{F}_p[x]\), \(p\) being prime. A list of tuples \((d_i
+. f_i)\) is returned, so the supplied polynomial is equal to
 \(\prod_i f_i^{d_i}\) multiplied by the second returned value.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">reducing-polynomials</code><code class="codex-lambda-list">(f p)</code><div class="codex-docstring">Return a list of all f-reducing polynomials for a monic non-constant
 square-free polynomial \(f \in \mathbb{F}_p[x]\).</div></div>
@@ -132,17 +133,15 @@ factors. An optional parameter <code>algorithm</code> can be either
    
    <h1 id="factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</h1>
      
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">suitable-primes</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return an iterator for suitable primes for reducing a factorization
-in \(\mathbb{Z}[x]\) to a factorization in \(\mathbb{F}_p[x]\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">suitable-primes</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a suitable prime for reducing a factorization in
+\(\mathbb{Z}[x]\) to a factorization in \(\mathbb{F}_p[x]\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">suitable-bound</code><code class="codex-lambda-list">(f)</code><div class="codex-docstring">Return a suitable bound for absolute values of coefficients of
+factors of \(f\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">remove-content</code><code class="codex-lambda-list">(f)</code><div class="codex-docstring">For polynomial \(f \in \mathbb{Z}[x]\) return its primitive
 part and content.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">lift-factors</code><code class="codex-lambda-list">(f g h q)</code><div class="codex-docstring"><p>For a primitive polynomial \(f \in \mathbb{Z}[x]\) with leading
-coefficient &gt; 0 and \(g, h \in \mathbb{Z}_q[x]\) find polynomials
-\(\hat{g}, \hat{h} \in \mathbb{Z}[x]\) such that \(f = \hat{g}
-\hat{h}\) if \(f = g h \mod q\).</p><p>The first two values returned are the desired factors. The third value
-is a boolean being equal to <code>T</code> if the algorithm has successfully
-found a solution in \(\mathbb{Z}[x]\). If this value is <code>NIL</code>
-the first two values can be ignored.</p></div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">lift-factors</code><code class="codex-lambda-list">(f gs p n)</code><div class="codex-docstring">For a monic polynomial \(f \in \mathbb{Z}[x]\) and a list of
+its factors in \(\mathbb{F}_p[x]\), lift these factors to
+\(\mathbb{Z}_{p^{2^n}}[x]\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">gcd</code><code class="codex-lambda-list">(poly1 poly2)</code><div class="codex-docstring">Calculate GCD of two polynomials in \(\mathbb{Z}[x]\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">square-free</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Perform square-free factorization for a polynomial \(f \in
 \mathbb{Z}[x]\). The first returned value is a list of tuples \((d_i
@@ -151,6 +150,12 @@ multiplied by a second returned value.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">factor</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Factor a polynomial in \(\mathbb{Z}[x]\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">irreduciblep</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if polynomial is irreducible in \(\mathbb{Z}[x]\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">cyclotomic</code><code class="codex-lambda-list">(n)</code><div class="codex-docstring">Get n-th cyclotomic polynomial in \(\mathbb{Z}[x]\).</div></div>
+       <div class="codex-doc-node codex-variable"><code class="codex-name">*different-primes*</code><div class="codex-docstring">When factoring a polynomial in \(\mathbb{Z}[x]\) try at most
+this number of primes suitable for factorization to find a prime
+with minimal number of factors in \(\mathbb{F}_p[x]\).</div></div>
+       <div class="codex-doc-node codex-variable"><code class="codex-name">*factors-num-bound*</code><div class="codex-docstring">When factoring a polynomial in \(\mathbb{Z}[x]\) and a number of
+factors in \(\mathbb{F}_p[x]\) exceeds this number, try another
+prime \(p\)(with at most <code>*different-primes*</code> trials).</div></div>
      
    
    <h1 id="auxiliary-number-theoretic-functions">Auxiliary number-theoretic functions</h1>
@@ -160,6 +165,14 @@ multiplied by a second returned value.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">factor</code><code class="codex-lambda-list">(n)</code><div class="codex-docstring">Factor a non-negative integer <code>n</code> into prime numbers.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">totient</code><code class="codex-lambda-list">(n)</code><div class="codex-docstring">Euler's totient function.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">moebius</code><code class="codex-lambda-list">(n)</code><div class="codex-docstring">Moebius function.</div></div>
+       <div class="codex-doc-node codex-variable"><code class="codex-name">*prime-source*</code><div class="codex-docstring">Iterator which returns primes.<pre><code class="lisp">(stateless-iterators:collect
+  (stateless-iterators:take 100 cl-polynomial/z:*prime-source*)) =&gt;
+(2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 83 89 97 101 103
+ 107 109 113 127 131 137 139 149 151 157 163 167 173 179 181 191 193 197 199
+ 211 223 227 229 233 239 241 251 257 263 269 271 277 281 283 293 307 311 313
+ 317 331 337 347 349 353 359 367 373 379 383 389 397 401 409 419 421 431 433
+ 439 443 449 457 461 463 467 479 487 491 499 503 509 521 523 541)
+</code></pre></div></div>
      
    
 

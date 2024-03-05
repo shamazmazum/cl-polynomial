@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.2.3
+
+* Improvement: Do not use floating point functions when computing Mignotte
+  bound.
+* Improvement: When factoring in ℤ[x], try different primes if the first prime
+  produces to much factors in 𝔽_p[x].
+
 ## Version 0.2.2
 
 * New feature: POLYNOMIAL/= function which behaves like a composition of NOT and

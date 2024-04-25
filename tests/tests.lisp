@@ -116,6 +116,18 @@
 
 (in-suite algebra)
 
+(test reciprocal
+  (loop with state = (make-random-state t)
+        repeat 1000 do
+        (let* ((poly1 (p:add (p:multiply (random-poly 100 state) p:+variable+) p:+one+))
+               (poly2 (p:reciprocal poly1)))
+          (is-true (coeffs-sorted-p poly2))
+          (is (= (p:degree poly1)
+                 (p:degree poly2)))
+          ;; FIXME: Need `evaluate` here
+          (is (= (reduce #'+ (p:polynomial-coeffs poly1) :key #'cdr)
+                 (reduce #'+ (p:polynomial-coeffs poly2) :key #'cdr))))))
+
 (test mod-sym-homomorphism
   (loop for p in '(2 3 5 7) do
         (loop for n in '(1 2 3 4) do

@@ -32,7 +32,9 @@
            #:monicp
            #:constantp
            #:derivative
-           #:expt))
+           #:expt
+           #:reciprocal
+           #:palindromep))
 (in-package :cl-polynomial/polynomial)
 
 ;; FIXME: let monomial be just an alias for a tuple?
@@ -362,3 +364,25 @@ calculate \\(f^n(x)\\)."
                (t
                 (%expt f (1- n) (multiply f acc))))))
     (%expt f n +one+)))
+
+(sera:-> reciprocal (polynomial)
+         (values polynomial &optional))
+(defun reciprocal (f)
+  "Return a reciprocal polynomial of \\(f\\), i.e. given \\(f(x)\\),
+return \\(x^{\\deg f} f(x^{-1})\\)."
+  (let ((degree (degree f)))
+    (polynomial
+     (reduce
+      (lambda (acc m)
+        (declare (type monomial m))
+        (bind-monomial (d c) m
+          (cons (cons (- degree d) c) acc)))
+      (polynomial-coeffs f)
+      :initial-value nil))))
+
+(sera:-> palindromep (polynomial)
+         (values boolean &optional))
+(defun palindromep (f)
+  "Return @c(T) if \\(f\\) is a palindrome, i.e. it is equal to its
+reciprocal polynomial."
+  (polynomial= f (reciprocal f)))

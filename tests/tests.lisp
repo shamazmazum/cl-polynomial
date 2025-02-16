@@ -126,6 +126,21 @@
           for x = (random 100) do
           (is (= (p:evaluate poly x) (simple-eval poly x))))))
 
+(test interpolation
+  (loop with state = (make-random-state t)
+        repeat 10000
+        for points = (fpx:list->points
+                      (remove-duplicates
+                       (loop repeat (1+ (random 20)) collect (cons (random 50) (random 50)))
+                       :key #'car :test #'=))
+        for p = (fpx:interpolate points 211) do
+        (is-true
+         (every
+          (lambda (point)
+            (fpx:bind-point (x y) point
+              (= y (fpx:evaluate p x 211))))
+          (fpx:points-list points)))))
+
 (test reciprocal
   (loop with state = (make-random-state t)
         repeat 1000 do

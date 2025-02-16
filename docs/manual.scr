@@ -95,6 +95,8 @@ EXAMPLE> (zx:factor *)
      @title(Other operations on polynomials in \(\mathbb{F}_p[x]\) (@c(cl-polynomial/fpx)))
      @cl:with-package[name="cl-polynomial/fpx"](
        @cl:doc(function evaluate)
+       @cl:doc(function list->points)
+       @cl:doc(function interpolate)
      )
    @end(section)
    @begin(section)

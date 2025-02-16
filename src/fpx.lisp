@@ -22,7 +22,14 @@
            #:reducing-polynomials
            #:irreduciblep
            #:factor
-           #:evaluate))
+
+           #:evaluate
+           #:point
+           #:bind-point
+           #:points
+           #:points-list
+           #:list->points
+           #:interpolate))
 (in-package :cl-polynomial/fpx)
 
 ;; OPERATIONS
@@ -442,3 +449,66 @@ factors. An optional parameter @c(algorithm) can be either
   "Evaluate a polynomial in a ring \\(\\mathbb{Z}_q[x]\\) at point
 \\(x\\)."
   (u:mod-sym (p:evaluate p x) q))
+
+
+;; Interpolation stuff
+(deftype point () '(cons integer integer))
+
+(sera:defconstructor points
+  (list list))
+
+(defmacro bind-point ((x y) point &body body)
+  (let ((p (gensym)))
+    `(let ((,p ,point))
+       (declare (type point ,p))
+       (let ((,x (car ,p))
+             (,y (cdr ,p)))
+         ,@body))))  
+
+;; For details see
+;; https://en.wikipedia.org/wiki/Chinese_remainder_theorem
+;; or
+;; https://en.wikipedia.org/wiki/Lagrange_polynomial
+(sera:-> interpolate (points u:prime-power)
+         (values p:polynomial &optional))
+(defun interpolate (points p)
+  "Return a polynomial in \\(\\mathbb{F}_p[x]\\) which evaluates to a
+given set of points.
+
+@begin[lang=lisp](code)
+(cl-polynomial/fpx:interpolate (cl-polynomial/fpx:points '((1 . 2) (4 . -2) (0 . 3))) 11)
+#<CL-POLYNOMIAL/POLYNOMIAL:POLYNOMIAL - X^2 + 3>
+@end(code)
+
+It's safe to try to interpolate in a ring (not a field)
+\\(\\mathbb{Z}_q[x]\\) also. In this case an error is signaled when
+there is no such interpolation."
+  (labels ((%go (g h ps)
+             (if (null ps) g
+                 (bind-point (x y) (car ps)
+                   (let* ((a (- y (evaluate g x p)))
+                          (b (evaluate h x p))
+                          (c (* a (u:invert-integer b p))))
+                     (%go (modulo (p:add g (p:scale h c)) p)
+                          (modulo (p:multiply h (p:polynomial
+                                                 (list (cons 1 1) (cons 0 (- x)))))
+                                  p)
+                          (cdr ps)))))))
+    (%go p:+zero+ p:+one+ (points-list points))))
+
+(sera:-> list->points (list)
+         (values points &optional))
+(defun list->points (list)
+  "Coerce a list of pairs @c((x . y)) to @c(points). All x'es must be distinct."
+  (points
+   (reduce
+    (lambda (acc point)
+      (bind-point (x y) point
+        (declare (ignore y))
+        (when (assoc x acc :test #'=)
+          (error #.(concatenate
+                    'string
+                    "There are duplicate X'es in a list of points. "
+                    "All points must be distinct."))))
+      (cons point acc))
+    list :initial-value nil)))

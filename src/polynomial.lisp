@@ -34,7 +34,8 @@
            #:derivative
            #:expt
            #:reciprocal
-           #:palindromep))
+           #:palindromep
+           #:evaluate))
 (in-package :cl-polynomial/polynomial)
 
 ;; FIXME: let monomial be just an alias for a tuple?
@@ -386,3 +387,18 @@ return \\(x^{\\deg f} f(x^{-1})\\)."
   "Return @c(T) if \\(f\\) is a palindrome, i.e. it is equal to its
 reciprocal polynomial."
   (polynomial= f (reciprocal f)))
+
+
+(sera:-> evaluate (polynomial integer)
+         (values integer &optional))
+(defun evaluate (p x)
+  "Evaluate a polynomial in \\(\\mathbb{Z}[x]\\) at point \\(x\\)."
+  (labels ((%go (acc coeffs)
+             (if (null coeffs) acc
+                 (bind-monomial (deg coeff)
+                     (car coeffs)
+                   (let ((next-deg (or (car (second coeffs)) 0)))
+                     (%go (* (+ acc coeff)
+                             (cl:expt x (- deg next-deg)))
+                          (cdr coeffs)))))))
+    (%go 0 (polynomial-coeffs p))))

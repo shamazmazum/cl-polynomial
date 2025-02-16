@@ -21,7 +21,8 @@
            #:berlekamp-factor
            #:reducing-polynomials
            #:irreduciblep
-           #:factor))
+           #:factor
+           #:evaluate))
 (in-package :cl-polynomial/fpx)
 
 ;; OPERATIONS
@@ -434,3 +435,10 @@ factors. An optional parameter @c(algorithm) can be either
                     (t
                      (error "ALGORITHM must be either :BERLEKAMP or :CANTOR-ZASSENHAUS")))))))
      m)))
+
+(sera:-> evaluate (p:polynomial integer u:prime-power)
+         (values integer &optional))
+(defun evaluate (p x q)
+  "Evaluate a polynomial in a ring \\(\\mathbb{Z}_q[x]\\) at point
+\\(x\\)."
+  (u:mod-sym (p:evaluate p x) q))

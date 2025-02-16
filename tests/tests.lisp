@@ -116,6 +116,16 @@
 
 (in-suite algebra)
 
+(test evaluation
+  (flet ((simple-eval (p x)
+           (loop for (deg . coeff) in (p:polynomial-coeffs p) sum
+                 (* coeff (expt x deg)))))
+    (loop with state = (make-random-state t)
+          repeat 10000
+          for poly = (p:list->polynomial (loop repeat 20 collect (random 10)))
+          for x = (random 100) do
+          (is (= (p:evaluate poly x) (simple-eval poly x))))))
+
 (test reciprocal
   (loop with state = (make-random-state t)
         repeat 1000 do

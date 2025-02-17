@@ -6,7 +6,11 @@
                     (#:alex #:alexandria)
                     (#:si   #:stateless-iterators)
                     (#:u    #:cl-polynomial/util))
-  (:export #:factor #:totient #:moebius #:*prime-source*))
+  (:export #:factor
+           #:totient
+           #:moebius
+           #:*prime-source*
+           #:fourier-primes))
 (in-package :cl-polynomial/z)
 
 (sera:-> factor ((integer 0))
@@ -82,3 +86,16 @@
  317 331 337 347 349 353 359 367 373 379 383 389 397 401 409 419 421 431 433
  439 443 449 457 461 463 467 479 487 491 499 503 509 521 523 541)
 @end(code)")
+
+
+;; TODO: requires even faster prime source
+(sera:-> fourier-primes ((integer 1))
+         (values si:iterator &optional))
+(defun fourier-primes (r)
+  "Return primes in the form \\(2^r k + 1\\) where \\(k\\) is odd."
+  (let ((n (expt 2 r)))
+    (si:filter
+     (lambda (p)
+       (let ((m (/ (1- p) n)))
+         (and (integerp m) (oddp m))))
+     *prime-source*)))

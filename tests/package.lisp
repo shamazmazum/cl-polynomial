@@ -3,6 +3,7 @@
   (:local-nicknames (#:u    #:cl-polynomial/util)
                     (#:p    #:cl-polynomial/polynomial)
                     (#:fpx  #:cl-polynomial/fpx)
+                    (#:fp   #:cl-polynomial/fp)
                     (#:zx   #:cl-polynomial/zx)
                     (#:z    #:cl-polynomial/z)
                     (#:alex #:alexandria)

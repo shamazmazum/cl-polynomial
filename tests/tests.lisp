@@ -114,6 +114,27 @@
                          (if (zerop (rem n1 i)) (z:moebius i) 0))
                    0))))))
 
+(test multiplicative-group
+  (let ((*random-state* (make-random-state t)))
+    (si:do-iterator (p (si:take 1000 z:*prime-source*))
+      (let ((g (fp:*-group-generator p)))
+        (is (= (length
+                (remove-duplicates
+                 (si:collect
+                     (si:take (1- p) (si:iterate (lambda (x) (u:mod-sym (* x g) p)) 1)))
+                 :test #'=))
+               (1- p)))))))
+
+(test primitive-root-of-unity
+  (let ((*random-state* (make-random-state t)))
+    (si:do-iterator (r (si:range 1 12))
+      (let* ((p (si:consume-one (z:fourier-primes r)))
+             (n (expt 2 r))
+             (g (fp:primitive-root-of-unity p n)))
+        (is (= (u:mod-sym (expt g n) p) 1))
+        (is-false (si:some (lambda (m) (= (u:mod-sym (expt g m) p) 1))
+                           (si:range 1 n)))))))
+
 (in-suite algebra)
 
 (test evaluation

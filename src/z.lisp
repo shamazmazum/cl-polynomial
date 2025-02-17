@@ -53,18 +53,24 @@
       ((evenp length) 1)
       (t -1))))
 
-(sera:-> get-prime (alex:positive-fixnum)
-         (values u:prime &optional))
-(defun get-prime (n)
-  (+ (* (1- n) (floor (mod (alex:factorial n) (1+ n)) n)) 2))
+;; https://en.wikipedia.org/wiki/Formula_for_primes
+(sera:-> get-prime ((cons unsigned-byte alex:positive-fixnum))
+         (values u:prime (cons unsigned-byte alex:positive-fixnum) &optional))
+(defun get-prime (state)
+  (let* ((n! (car state))
+         (n  (cdr state))
+         (%n (1+ n)))
+    (values
+     (+ (* (1- n) (floor (mod n! %n) n)) 2)
+     (cons (* n! %n) %n))))
 
 (declaim (type si:iterator *prime-source*))
 (defparameter *prime-source*
   (si:concat
-   (si:list->iterator '(2 3 5 7 11 13 17 19))
+   (si:singleton 2)
    (si:filter
     (lambda (x) (/= x 2))
-    (si:imap #'get-prime (si:count-from 19))))
+    (si:unfold #'get-prime '(2 . 2))))
   "Iterator which returns primes.
 
 @begin[lang=lisp](code)

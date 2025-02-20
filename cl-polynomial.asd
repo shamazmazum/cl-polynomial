@@ -14,8 +14,8 @@
                  :cl-polynomial/linalg
                  :cl-polynomial/polynomial
                  :cl-polynomial/z
-                 :cl-polynomial/fp
                  :cl-polynomial/fpx
+                 :cl-polynomial/fft
                  :cl-polynomial/zx)
     :in-order-to ((test-op (load-op "cl-polynomial/tests")))
     :perform (test-op (op system)

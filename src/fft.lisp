@@ -166,3 +166,54 @@ unity in that field, where \\(n\\) is the length of ARRAY. The length
   (sanity-checks array p ω)
   (renormalize
    (%fft array p (u:invert-integer ω p)) p))
+
+;; Requirement: Array length is a power of 2
+(sera:-> reverse-bits ((integer 1) unsigned-byte)
+         (values unsigned-byte &optional))
+(declaim (inline reverse-bits))
+(defun reverse-bits (length n)
+  (let ((length (integer-length (1- length))))
+    (si:foldl
+     (lambda (acc i)
+       (logior acc (ash (ldb (byte 1 i) n) (- length i 1))))
+     0 (si:range 0 length))))
+
+;; Requirement: Array length is a power of 2
+(sera:-> reorder-input ((simple-array integer (*)))
+         (values (simple-array integer (*)) &optional))
+(defun reorder-input (array)
+  (declare (optimize (speed 3)))
+  (let* ((length (length array))
+         (result (make-array length :element-type 'integer)))
+    (loop for i below length do
+          (setf (aref result i)
+                (aref array (reverse-bits length i))))
+    result))
+
+;; Requirement: Array length is a power of 2
+(sera:-> %fft! ((simple-array integer (*)) u:prime integer)
+         (values (simple-array integer (*)) &optional))
+(defun %fft! (array p ω)
+  (declare (optimize (speed 3)))
+  (let* ((length (length array))
+         (steps  (integer-length (1- length))))
+    (loop for s below steps
+          for pair-offset  = (ash 1 s)
+          for ngroups = (ash 1 (- steps s 1))
+          for group-size = pair-offset ;; number of evens
+          for m = (u:mod-sym (expt ω ngroups) p) do
+          (loop for i below ngroups
+                for group-offset fixnum from 0 by (* group-size 2) do
+                (loop for j below group-size
+                      with %m = 1
+                      for even-idx = (+ group-offset j)
+                      for odd-idx  = (+ even-idx pair-offset)
+                      for even = (aref array even-idx)
+                      for odd  = (aref array odd-idx)
+                      for %odd = (* odd %m) do
+                      (setf (aref array even-idx)
+                            (u:mod-sym (+ even %odd) p)
+                            (aref array odd-idx)
+                            (u:mod-sym (- even %odd) p)
+                            %m (u:mod-sym (* %m m) p)))))
+    array))

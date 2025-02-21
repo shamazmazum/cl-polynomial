@@ -87,47 +87,6 @@ greater than \\(n\\)."
                             :initial-element 0)))
     (map-into %array #'identity array)))
 
-(sera:-> phase-split ((simple-array integer (*)))
-         (values (simple-array integer (*))
-                 (simple-array integer (*))
-                 &optional))
-(defun phase-split (array)
-  (declare (optimize (speed 3)))
-  (let* ((length (length array))
-         (phase1 (make-array (/ length 2) :element-type 'integer))
-         (phase2 (make-array (/ length 2) :element-type 'integer)))
-    (loop for i below length by 2
-          for j from 0 by 1 do
-          (setf (aref phase1 j) (aref array (+ i 0))
-                (aref phase2 j) (aref array (+ i 1))))
-    (values phase1 phase2)))
-
-;; Output size = input size!
-;; ω = n-th primitive root of unity in F_p, n being the input's length
-(sera:-> %fft ((simple-array integer (*)) u:prime integer)
-         (values (simple-array integer (*)) &optional))
-(defun %fft (array p ω)
-  (declare (optimize (speed 3)))
-  (let* ((length   (length array))
-         (length/2 (/ length 2)))
-    (if (= length 1) array
-        (multiple-value-bind (phase1 phase2)
-            (phase-split array)
-          (let ((fft1 (%fft phase1 p (u:mod-sym (expt ω 2) p)))
-                (fft2 (%fft phase2 p (u:mod-sym (expt ω 2) p)))
-                (result (make-array length :element-type 'integer)))
-            (loop with ω^i = 1
-                  for i below length/2
-                  for even = (aref fft1 i)
-                  for odd  = (aref fft2 i)
-                  for %odd = (* odd ω^i) do
-                  (setf (aref result i)
-                        (u:mod-sym (+ even %odd) p)
-                        (aref result (+ i length/2))
-                        (u:mod-sym (- even %odd) p)
-                        ω^i (u:mod-sym (* ω^i ω) p)))
-            result)))))
-
 (sera:-> renormalize ((simple-array integer (*)) u:prime)
          (values (simple-array integer (*)) &optional))
 (defun renormalize (array p)
@@ -136,36 +95,6 @@ greater than \\(n\\)."
          (lambda (x)
            (u:mod-sym (* x m) p))
          array)))
-
-(declaim (inline sanity-checks))
-(defun sanity-checks (array p ω)
-  (let ((n (length array)))
-    (unless (zerop (logand n (1- n)))
-      (error "Length of the input array is not a power of 2"))
-    (unless (= (u:mod-sym (expt ω n) p) 1)
-      (error "ω is not a root of unity we need"))))
-
-(sera:-> fft ((simple-array integer (*)) u:prime integer)
-         (values (simple-array integer (*)) &optional))
-(defun fft (array p ω)
-  "Perform forward FFT of ARRAY in a field
-\\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
-unity in that field, where \\(n\\) is the length of ARRAY. The length
-\\(n\\) must be a positive integer power of two."
-  (sanity-checks array p ω)
-  (%fft array p ω))
-
-(sera:-> ifft ((simple-array integer (*)) u:prime integer)
-         (values (simple-array integer (*)) &optional))
-(defun ifft (array p ω)
-  "Invert FFT.
-
-@begin[lang=lisp](code)
-(every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
-@end(code)"
-  (sanity-checks array p ω)
-  (renormalize
-   (%fft array p (u:invert-integer ω p)) p))
 
 ;; Requirement: Array length is a power of 2
 (sera:-> reverse-bits ((integer 1) unsigned-byte)
@@ -217,3 +146,33 @@ unity in that field, where \\(n\\) is the length of ARRAY. The length
                             (u:mod-sym (- even %odd) p)
                             %m (u:mod-sym (* %m m) p)))))
     array))
+
+(declaim (inline sanity-checks))
+(defun sanity-checks (array p ω)
+  (let ((n (length array)))
+    (unless (zerop (logand n (1- n)))
+      (error "Length of the input array is not a power of 2"))
+    (unless (= (u:mod-sym (expt ω n) p) 1)
+      (error "ω is not a root of unity we need"))))
+
+(sera:-> fft ((simple-array integer (*)) u:prime integer)
+         (values (simple-array integer (*)) &optional))
+(defun fft (array p ω)
+  "Perform forward FFT of ARRAY in a field
+\\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
+unity in that field, where \\(n\\) is the length of ARRAY. The length
+\\(n\\) must be a positive integer power of two."
+  (sanity-checks array p ω)
+  (%fft! (reorder-input array) p ω))
+
+(sera:-> ifft ((simple-array integer (*)) u:prime integer)
+         (values (simple-array integer (*)) &optional))
+(defun ifft (array p ω)
+  "Invert FFT.
+
+@begin[lang=lisp](code)
+(every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
+@end(code)"
+  (sanity-checks array p ω)
+  (renormalize
+   (%fft! (reorder-input array) p (u:invert-integer ω p)) p))

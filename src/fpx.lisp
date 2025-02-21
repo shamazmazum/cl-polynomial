@@ -311,23 +311,23 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
 factors."
   (berlekamp-reduce f (reducing-polynomials f p) p))
 
-(sera:-> expt-rem (p:polynomial integer p:polynomial u:prime)
+(sera:-> expt-mod (p:polynomial integer p:polynomial u:prime)
          (values p:polynomial &optional))
-(defun expt-rem (f n g p)
+(defun expt-mod (f n g p)
   "Calculate \\(f^n(x) \\mod g(x)\\) for a non-negative integer
 \\(n\\) and \\(f,g \\in \\mathbb{F}_p[x]\\)."
   (labels ((mul-rem (f1 f2)
              (remainder (modulo (p:multiply f1 f2) p) g p))
-           (%expt-rem (f n acc)
+           (%expt-mod (f n acc)
              (cond
                ((zerop n) acc)
                ((evenp n)
-                (%expt-rem (mul-rem f f) (floor n 2) acc))
+                (%expt-mod (mul-rem f f) (floor n 2) acc))
                (t
-                (%expt-rem f (1- n) (mul-rem f acc))))))
-    (%expt-rem f n p:+one+)))
+                (%expt-mod f (1- n) (mul-rem f acc))))))
+    (%expt-mod f n p:+one+)))
 
-;; f(x)^q mod q can be done really fast, no need to call slow EXPT-REM.
+;; f(x)^q mod q can be done really fast, no need to call slow EXPT-MOD.
 (sera:-> expt-q (p:polynomial u:prime)
          (values p:polynomial &optional))
 (defun expt-q (f q)
@@ -356,7 +356,7 @@ factor must be of degree @c(deg)."
                 (p:polynomial (list (cons (1- (* 2 deg)) 1)))))
              (w (f)
                (modulo
-                (p:add (expt-rem (random-poly) (floor (expt p deg) 2) f p) p:+one+) p))
+                (p:add (expt-mod (random-poly) (floor (expt p deg) 2) f p) p:+one+) p))
              (collect-factors (factor acc)
                (if (= (length acc) nfactors) acc
                    (let ((gcd (gcd factor (w f) p)))

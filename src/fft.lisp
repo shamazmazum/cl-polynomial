@@ -101,11 +101,10 @@ greater than \\(n\\)."
          (values unsigned-byte &optional))
 (declaim (inline reverse-bits))
 (defun reverse-bits (length n)
-  (let ((length (integer-length (1- length))))
-    (si:foldl
-     (lambda (acc i)
-       (logior acc (ash (ldb (byte 1 i) n) (- length i 1))))
-     0 (si:range 0 length))))
+  (loop with length = (integer-length (1- length))
+        for i below length sum
+        (ash (ldb (byte 1 i) n) (- length i 1))
+        fixnum))
 
 ;; Requirement: Array length is a power of 2
 (sera:-> reorder-input ((simple-array integer (*)))

@@ -382,7 +382,7 @@
             (dolist (rp (fpx:reducing-polynomials polynomial prime))
               (is (p:polynomial=
                    ;; rp^prime mod polynomial
-                   (fpx:modulo (fpx::expt-rem rp prime polynomial prime) prime)
+                   (fpx::expt-mod rp prime polynomial prime)
                    rp)))))))
 
 (test factor-finite

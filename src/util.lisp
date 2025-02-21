@@ -96,6 +96,7 @@ there is no such inverse."
   (labels ((mul-mod (a b)
              (mod-sym (* a b) p))
            (%expt-mod (a n acc)
+             (declare (type fixnum n))
              (cond
                ((zerop n) acc)
                ((evenp n)

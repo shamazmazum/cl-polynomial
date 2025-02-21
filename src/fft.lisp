@@ -53,7 +53,7 @@
                           (declare (type u:prime m))
                           (let ((a (/ (1- p) m)))
                             (declare (type integer a))
-                            (/= (u:mod-sym (expt n a) p) 1)))
+                            (/= (u:expt-mod n a p) 1)))
                         factors)))
           (loop for gen = (+ (random (- p 2)) 2)
                 until (generatorp gen)
@@ -68,7 +68,7 @@
   (let ((gen (*-group-generator p))
         (m (/ (1- p) n)))
     (declare (type integer m))
-    (u:mod-sym (expt gen m) p)))
+    (u:expt-mod gen m p)))
 
 (sera:-> padded-length (alex:positive-fixnum)
          (values alex:positive-fixnum &optional))

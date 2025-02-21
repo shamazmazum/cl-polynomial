@@ -129,7 +129,7 @@ greater than \\(n\\)."
           for pair-offset  = (ash 1 s)
           for ngroups = (ash 1 (- steps s 1))
           for group-size = pair-offset ;; number of evens
-          for m = (u:mod-sym (expt ω ngroups) p) do
+          for m = (u:expt-mod ω ngroups p) do
           (loop for i below ngroups
                 for group-offset fixnum from 0 by (* group-size 2) do
                 (loop for j below group-size
@@ -151,7 +151,7 @@ greater than \\(n\\)."
   (let ((n (length array)))
     (unless (zerop (logand n (1- n)))
       (error "Length of the input array is not a power of 2"))
-    (unless (= (u:mod-sym (expt ω n) p) 1)
+    (unless (= (u:expt-mod ω n p) 1)
       (error "ω is not a root of unity we need"))))
 
 (sera:-> fft ((simple-array integer (*)) u:prime integer)

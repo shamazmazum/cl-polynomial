@@ -10,7 +10,8 @@
 
            #:gcdex
            #:mod-sym
-           #:invert-integer))
+           #:invert-integer
+           #:expt-mod))
 (in-package :cl-polynomial/util)
 
 ;; A type for matrices
@@ -86,3 +87,19 @@ there is no such inverse."
     (when (/= gcd 1)
       (error "N does not have a multiplicative inverse: N is not coprime with P"))
     (mod-sym a q)))
+
+(sera:-> expt-mod (integer alex:non-negative-fixnum prime)
+         (values integer &optional))
+(defun expt-mod (a n p)
+  "Compute \\(a^n \\mod p\\)."
+  (declare (optimize (speed 3)))
+  (labels ((mul-mod (a b)
+             (mod-sym (* a b) p))
+           (%expt-mod (a n acc)
+             (cond
+               ((zerop n) acc)
+               ((evenp n)
+                (%expt-mod (mul-mod a a) (floor n 2) acc))
+               (t
+                (%expt-mod a (1- n) (mul-mod a acc))))))
+    (%expt-mod a n 1)))

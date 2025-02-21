@@ -9,7 +9,7 @@
                    (let ((status (run suite)))
                      (explain! status)
                      (results-status status)))
-                 '(number algebra factor))))
+                 '(number algebra factor fft))))
 
 (defun coeffs-sorted-p (polynomial)
   (let* ((coeffs (p:polynomial-coeffs polynomial))
@@ -74,6 +74,7 @@
 (def-suite number  :description "Basic number-theoretic functions")
 (def-suite algebra :description "Generic algebraic operations on polynomials")
 (def-suite factor  :description "Factorization of polynomials over finite fields")
+(def-suite fft     :description "Fast Fourier transform")
 
 (in-suite number)
 
@@ -113,27 +114,6 @@
             (is (= (loop for i from 1 to n1 sum
                          (if (zerop (rem n1 i)) (z:moebius i) 0))
                    0))))))
-
-(test multiplicative-group
-  (let ((*random-state* (make-random-state t)))
-    (si:do-iterator (p (si:take 1000 z:*prime-source*))
-      (let ((g (fp:*-group-generator p)))
-        (is (= (length
-                (remove-duplicates
-                 (si:collect
-                     (si:take (1- p) (si:iterate (lambda (x) (u:mod-sym (* x g) p)) 1)))
-                 :test #'=))
-               (1- p)))))))
-
-(test primitive-root-of-unity
-  (let ((*random-state* (make-random-state t)))
-    (si:do-iterator (r (si:range 1 12))
-      (let* ((p (si:consume-one (z:fourier-primes r)))
-             (n (expt 2 r))
-             (g (fp:primitive-root-of-unity p n)))
-        (is (= (u:mod-sym (expt g n) p) 1))
-        (is-false (si:some (lambda (m) (= (u:mod-sym (expt g m) p) 1))
-                           (si:range 1 n)))))))
 
 (in-suite algebra)
 
@@ -500,3 +480,75 @@
               (factors2 (zx:factor (p:polynomial (list (cons n 1) '(0 . -1))))))
           (is-true (every (lambda (f) (= (car f) 1)) factors2))
           (is (set-equal-p factors1 (mapcar #'cdr factors2))))))
+
+(in-suite fft)
+
+(test multiplicative-group
+  (let ((*random-state* (make-random-state t)))
+    (si:do-iterator (p (si:take 1000 z:*prime-source*))
+      (let ((g (fft:*-group-generator p)))
+        (is (= (length
+                (remove-duplicates
+                 (si:collect
+                     (si:take (1- p) (si:iterate (lambda (x) (u:mod-sym (* x g) p)) 1)))
+                 :test #'=))
+               (1- p)))))))
+
+(test primitive-root-of-unity
+  (let ((*random-state* (make-random-state t)))
+    (si:do-iterator (r (si:range 1 12))
+      (let* ((n (expt 2 r))
+             (p (si:consume-one (fft:fourier-primes n)))
+             (g (fft:primitive-root-of-unity p n)))
+        (is (= (u:mod-sym (expt g n) p) 1))
+        (is-false (si:some (lambda (m) (= (u:mod-sym (expt g m) p) 1))
+                           (si:range 1 n)))))))
+
+(test ifft-fft-identity
+  (loop with p = 11777
+        with n = 512
+        repeat 5000
+        for a = (make-array n
+                            :element-type 'integer
+                            :initial-contents (loop repeat n collect (- (random 20) 10)))
+        for ω = (fft:primitive-root-of-unity p n)
+        do
+        (is-true (every #'= a (fft:ifft (fft:fft a p ω) p ω)))))
+
+(test fft-polynomial-multiplication
+  (loop with p = 51713
+        with n = 512
+        repeat 5000
+        for a = (make-array (/ n 2)
+                            :element-type 'integer
+                            :initial-contents (loop repeat (/ n 2)
+                                                    collect (- (random 20) 10)))
+        for b = (make-array (/ n 2)
+                            :element-type 'integer
+                            :initial-contents (loop repeat (/ n 2)
+                                                    collect (- (random 20) 10)))
+        for ω = (fft:primitive-root-of-unity p n)
+        for ft1 = (fft:fft (fft:pad-array a n) p ω)
+        for ft2 = (fft:fft (fft:pad-array b n) p ω)
+        for mul = (map '(vector integer) #'* ft1 ft2)
+        for c = (fft:ifft mul p ω) do
+        (is (p:polynomial= (p:sequence->polynomial c)
+                           (p:multiply
+                            (p:sequence->polynomial a)
+                            (p:sequence->polynomial b))))))
+
+(test fft-values
+  (loop with p = 1009
+        with n = 16
+        repeat 1000
+        for a = (make-array n
+                            :element-type 'integer
+                            :initial-contents (loop repeat n collect (random 500)))
+        for f = (p:sequence->polynomial a)
+        for ω = (fft:primitive-root-of-unity p n)
+        for fft = (fft:fft a p ω)
+        for slow-dft = (map '(vector integer)
+                            (lambda (k)
+                              (u:mod-sym (p:evaluate f (expt ω k)) p))
+                            (loop for k below n collect k))
+        do (is-true (every #'= fft slow-dft))))

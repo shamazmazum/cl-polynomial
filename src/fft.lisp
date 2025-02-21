@@ -3,10 +3,28 @@
   (:local-nicknames (#:sera #:serapeum)
                     (#:alex #:alexandria)
                     (#:u    #:cl-polynomial/util)
+                    (#:si   #:stateless-iterators)
                     (#:z    #:cl-polynomial/z))
-  (:export #:*-group-generator
-           #:primitive-root-of-unity))
+  (:export #:fourier-primes
+           #:*-group-generator
+           #:primitive-root-of-unity
+           #:pad-array
+           #:fft
+           #:ifft))
 (in-package :cl-polynomial/fft)
+
+;; TODO: requires a faster prime source
+(sera:-> fourier-primes (unsigned-byte)
+         (values si:iterator &optional))
+(defun fourier-primes (n)
+  "Return primes in the form \\(k n + 1\\) where \\(k\\) is odd and \\(n = 2^l, l > 0\\)."
+  (unless (zerop (logand n (1- n)))
+    (error "N must be a power of 2."))
+  (si:filter
+   (lambda (p)
+     (let ((m (/ (1- p) n)))
+       (and (integerp m) (oddp m))))
+   z:*prime-source*))
 
 (sera:-> unique-factors ((integer 0))
          (values list &optional))
@@ -58,11 +76,13 @@
 (defun padded-length (n)
   (ash 1 (integer-length (1- n))))
 
-(sera:-> pad-array ((simple-array integer (*)))
+(sera:-> pad-array ((simple-array integer (*)) &optional alex:positive-fixnum)
          (values (simple-array integer (*)) &optional))
-(defun pad-array (array)
+(defun pad-array (array &optional (n (length array)))
+  "Pad array with zeros to the smallest power of two which is equal or
+greater than \\(n\\)."
   (declare (optimize (speed 3)))
-  (let ((%array (make-array (padded-length (length array))
+  (let ((%array (make-array (padded-length n)
                             :element-type 'integer
                             :initial-element 0)))
     (map-into %array #'identity array)))
@@ -116,3 +136,33 @@
          (lambda (x)
            (u:mod-sym (* x m) p))
          array)))
+
+(declaim (inline sanity-checks))
+(defun sanity-checks (array p ω)
+  (let ((n (length array)))
+    (unless (zerop (logand n (1- n)))
+      (error "Length of the input array is not a power of 2"))
+    (unless (= (u:mod-sym (expt ω n) p) 1)
+      (error "ω is not a root of unity we need"))))
+
+(sera:-> fft ((simple-array integer (*)) u:prime integer)
+         (values (simple-array integer (*)) &optional))
+(defun fft (array p ω)
+  "Perform forward FFT of ARRAY in a field
+\\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
+unity in that field, where \\(n\\) is the length of ARRAY. The length
+\\(n\\) must be a positive integer power of two."
+  (sanity-checks array p ω)
+  (%fft array p ω))
+
+(sera:-> ifft ((simple-array integer (*)) u:prime integer)
+         (values (simple-array integer (*)) &optional))
+(defun ifft (array p ω)
+  "Invert FFT.
+
+@begin[lang=lisp](code)
+(every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
+@end(code)"
+  (sanity-checks array p ω)
+  (renormalize
+   (%fft array p (u:invert-integer ω p)) p))

@@ -3,6 +3,7 @@
   (:local-nicknames (#:sera #:serapeum)
                     (#:alex #:alexandria)
                     (#:u    #:cl-polynomial/util)
+                    (#:p    #:cl-polynomial/polynomial)
                     (#:si   #:stateless-iterators)
                     (#:z    #:cl-polynomial/z))
   (:export #:fourier-primes
@@ -10,7 +11,8 @@
            #:primitive-root-of-unity
            #:pad-array
            #:fft
-           #:ifft))
+           #:ifft
+           #:polynomial->vector))
 (in-package :cl-polynomial/fft)
 
 ;; TODO: requires a faster prime source
@@ -171,10 +173,10 @@ greater than \\(n\\)."
 (sera:-> fft ((simple-array integer (*)) u:prime integer)
          (values (simple-array integer (*)) &optional))
 (defun fft (array p ω)
-  "Perform forward FFT of ARRAY in a field
+  "Perform forward FFT of @c(array) in a field
 \\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
-unity in that field, where \\(n\\) is the length of ARRAY. The length
-\\(n\\) must be a positive integer power of two."
+unity in that field, where \\(n\\) is the length of @c(array). The
+length \\(n\\) must be a positive integer power of two."
   (sanity-checks array p ω)
   (%fft! (reorder-input array) p ω))
 
@@ -189,3 +191,17 @@ unity in that field, where \\(n\\) is the length of ARRAY. The length
   (sanity-checks array p ω)
   (renormalize
    (%fft! (reorder-input array) p (u:invert-integer ω p)) p))
+
+(sera:-> polynomial->vector (p:polynomial &optional alex:positive-fixnum)
+         (values (simple-array integer (*)) &optional))
+(defun polynomial->vector (p &optional (n (1+ (p:degree p))))
+  "Convert a polynomial to a vector suitable for use in @c(fft)
+function. The resulting vector has a size which is the smallest
+positive integer power of two which is greater or equal to \\(n\\). If
+\\(n\\) is supplied, it must be greater than the degree of \\(p\\)."
+  (unless (> n (p:degree p))
+    (error "N must be greater than the degree of P."))
+  (let ((array (make-array (padded-length n) :element-type 'integer :initial-element 0)))
+    (loop for (deg . c) in (p:polynomial-coeffs p) do
+          (setf (aref array deg) c))
+    array))

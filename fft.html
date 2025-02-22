@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
-  Overview &ndash; cl-polynomial
+  FFT &ndash; cl-polynomial
 </title>
     <link rel="stylesheet" href="static/style.css"/>
     
@@ -15,7 +15,7 @@
   <style>
    /* Highlight the current top-level TOC item, and hide the TOC of all other items */
 
-   .toc a[data-node="index"] {
+   .toc a[data-node="fft"] {
        /*color: #AD3108;*/
    }
 
@@ -23,15 +23,15 @@
        display: none;
    }
 
-   .toc li a[data-node="index"] {
+   .toc li a[data-node="fft"] {
        font-weight: bold;
    }
 
-   .toc li a[data-node="index"] + ol {
+   .toc li a[data-node="fft"] + ol {
        display: block;
    }
 
-   .toc li a[data-node="index"] + ol li {
+   .toc li a[data-node="fft"] + ol li {
        margin-left: 10px;
    }
   </style>
@@ -40,81 +40,69 @@
   <body>
     
   <h1 class="doc-title">cl-polynomial</h1>
-  <article id="article" data-section="index">
+  <article id="article" data-section="fft">
     <aside>
       <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="fft.html" data-node="fft">FFT</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="utility-functions--(-cl-polynomial-util-).html" data-node="utility-functions--(-cl-polynomial-util-)">Utility functions (<code>cl-polynomial/util</code>)</a></li><li><a href="basic-operations-on-polynomials--(-cl-polynomial-polynomial-).html" data-node="basic-operations-on-polynomials--(-cl-polynomial-polynomial-)">Basic operations on polynomials (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-).html" data-node="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)">Algebraic operations for polynomials over a ring (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-).html" data-node="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Division and factorization in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="other-operations-on-polynomials-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-).html" data-node="other-operations-on-polynomials-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Other operations on polynomials in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-).html" data-node="factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</a></li><li><a href="fft-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fft-).html" data-node="fft-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fft-)">FFT in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fft</code>)</a></li><li><a href="auxiliary-number-theoretic-functions.html" data-node="auxiliary-number-theoretic-functions">Auxiliary number-theoretic functions</a></li></ol></li></ol>
     </aside>
     <main class="codex-section">
       <header>
-        <h2 class="section-title">Overview</h2>
+        <h2 class="section-title">FFT</h2>
       </header>
       <div class="content">
         <p>
-   <code>cl-polynomial</code> is a library for manipulating polynomials in rings
-   \(\mathbb{Z}[x]\) and \(\mathbb{F}_p[x]\), \(p\) being prime.</p><p>   Supported features for any polynomial (in the package
-   <code>cl-polynomial/polynomial</code>):
-   </p><ul><li>Addition, subtraction, multiplication, exponentiation</li><li>Evaluation</li><li>Derivative</li><li>Various predicates</li></ul><p>
-   Supported features for any polynomial (in the packages
-   <code>cl-polynomial/fpx</code> for polynomials over finite fields and
-   <code>cl-polynomial/zx</code> for polynomials over integers):
-   </p><ul><li>GCD</li><li>Factorization</li></ul><p>
-   Additional features for polynomials over finite fields (in the packages
-   <code>cl-polynomial/fpx</code> and <code>cl-polynomial/fft</code>):
-   </p><ul><li>Division</li><li>Interpolation</li><li>Fast Fourier transform</li></ul><p>
-   Additional features for polynomials over integers (in the package
-   <code>cl-polynomial/zx</code>):
-   </p><ul><li>Cyclotomic polynomials</li></ul><p>   A few examples:
-   </p><pre><code class="lisp">CL-USER&gt; (defpackage example
+   Here is some explanation of how FFT can be used. First of all, in
+   \(\mathbb{C}[x]\) DFT (discrete Fourier transform) can be performed for any
+   number of evaluation points. In a finite field \(\mathbb{F}_p[x]\), the
+   number of evaluation points \(n\) must divide \(p - 1\). This implementation
+   works with \(n = 2^k, k \in \mathbb{N}\). Of course, a condition \(n &gt; \deg
+   f\) must be satisfied, so that FFT of \(f\) can be inverted. This is a
+   typical workflow for working with FFTs (all functions are in the package
+   <code>cl-polynomial/fft</code>):
+   </p><ol><li>Select a proper \(n &gt; \deg f\).</li><li>Convert \(f\) to an array of coefficients using
+   <code>polynomial-&gt;vector</code>. This vector will have the length \(m\) which if a
+   power of 2.</li><li>Choose a prime \(p = 2^k l + 1\), \(l\) being odd so that \(m\)
+   divides \(p-1\). This can be done using <code>fourier-primes</code>.</li><li>Generate a primitive \(m\)-th root of unity in \(\mathbb{F}_p\) with
+   <code>primitive-root-of-unity</code>.</li><li>Evaluate <code>fft</code> and then <code>ifft</code> when needed.</li></ol><p>   Here is an example of multiplication of polynomials over integers via FFT:
+   </p><pre><code class="lisp">(defpackage example
            (:use #:cl)
            (:local-nicknames (#:p   #:cl-polynomial/polynomial)
-                             (#:zx  #:cl-polynomial/zx)
-                             (#:fpx #:cl-polynomial/fpx)))
-#&lt;PACKAGE &quot;EXAMPLE&quot;&gt;
-CL-USER&gt; (in-package :example)
-#&lt;PACKAGE &quot;EXAMPLE&quot;&gt;
+                             (#:si  #:stateless-iterators)
+                             (#:fft #:cl-polynomial/fft)))
+(in-package :example)
 
-EXAMPLE&gt; (p:sequence-&gt;polynomial #*1110010101001)
-#&lt;P:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1&gt;
-EXAMPLE&gt; (fpx:factor * 11) ; Factorization over a finite field with p = 11
-((1 . #&lt;P:POLYNOMIAL X^6 - 5X^5 + 4X^4 + 3X^3 - 3X^2 + 5X - 2&gt;)
- (1 . #&lt;P:POLYNOMIAL X + 5&gt;)(1 . #&lt;P:POLYNOMIAL X^5 - X^3 + 1&gt;))
-1
-
-EXAMPLE&gt; (p:list-&gt;polynomial '(2 1 -1 -1 -4 -2 -2 1 1 2))
-#&lt;P:POLYNOMIAL 2X^9 + X^8 + X^7 - 2X^6 - 2X^5 - 4X^4 - X^3 - X^2 + X + 2&gt;
-EXAMPLE&gt; (zx:factor *) ; Factorization over integers
-((1 . #&lt;P:POLYNOMIAL X^4 - X - 1&gt;)(1 . #&lt;P:POLYNOMIAL X^3 + X^2 - 1&gt;)
- (1 . #&lt;P:POLYNOMIAL 2X^2 - X + 2&gt;))
-1
-
-EXAMPLE&gt; (let ((p (p:multiply (p:expt (p:list-&gt;polynomial '(1 2 3)) 2)
-                              (p:list-&gt;polynomial '(1 0 1)))))
-           (zx:gcd p (p:derivative p))) ; GCD
-#&lt;P:POLYNOMIAL 3X^2 + 2X + 1&gt;
-
-EXAMPLE&gt; (mapcar (lambda (x)(p:evaluate * x)) '(0 1 2)) ; Evaluation
-(1 6 17)
-
-EXAMPLE&gt; (fpx:interpolate
-          (fpx:list-&gt;points
-           (mapcar #'cons '(0 1 2) '(1 6 17)))
-          41) ; Interpolation
-#&lt;P:POLYNOMIAL 3X^2 + 2X + 1&gt;
-
-EXAMPLE&gt; (fpx:divide
-          (p:list-&gt;polynomial '(3 2 3))
-          (p:list-&gt;polynomial '(-1 1))
-          7) ; Division in a finite field (p = 7)
-#&lt;P:POLYNOMIAL 3X - 2&gt;
-#&lt;P:POLYNOMIAL 1&gt;
-
-EXAMPLE&gt; (fpx:modulo
-          (p:add (p:multiply (p:list-&gt;polynomial '(-2 3))
-                             (p:list-&gt;polynomial '(-1 1)))
-                 p:+one+)
-          7) ; Check the previous result
-#&lt;P:POLYNOMIAL 3X^2 + 2X + 3&gt;
-   </code></pre><p>
+(let* ((a (p:list-&gt;polynomial
+           (loop repeat 5 collect (random 10))))
+       (b (p:list-&gt;polynomial
+           (loop repeat 10 collect (random 10))))
+       ;; Convert to vectors
+       (v1 (fft:polynomial-&gt;vector a (+ 5 10)))
+       (v2 (fft:polynomial-&gt;vector b (+ 5 10)))
+       ;; Find large enough prime
+       (p (si:consume-one
+           (si:drop-while
+            (lambda (x)
+              (&lt; x (* 50 (+ 5 10) 2)))
+            (fft:fourier-primes (length v1)))))
+       ;; Find a 16-th primitive root of unity
+       (ω (fft:primitive-root-of-unity p (length v1)))
+       ;; Compute evaluation homomorphism
+       (fft1 (fft:fft v1 p ω))
+       (fft2 (fft:fft v2 p ω))
+       ;; Multiply polynomials under evaluation homomorphism and
+       ;; interpolate back into polynomials
+       (mv (fft:ifft (map '(vector integer) #'* fft1 fft2) p ω))
+       (m (p:sequence-&gt;polynomial mv)))
+  (values
+   a b
+   (p:multiply a b) ; &quot;Conventional&quot; multiplication
+   m))              ; Multiplication via FFT
+   </code></pre><p>   Evaluation of this code may give
+   </p><pre><code class=NIL>#&lt;P:POLYNOMIAL 9X^4 + 7X^3 + X^2 + 4&gt;
+#&lt;P:POLYNOMIAL 3X^9 + 4X^8 + 2X^7 + X^6 + X^5 + 8X^4 + 2X^3 + 4X + 1&gt;
+#&lt;P:POLYNOMIAL 27X^13 + 57X^12 + 49X^11 + 27X^10 + 30X^9 + 96X^8 + 83X^7 + 26X^6 + 42X^5 + 69X^4 + 19X^3 + X^2 + 16X + 4&gt;
+#&lt;P:POLYNOMIAL 27X^13 + 57X^12 + 49X^11 + 27X^10 + 30X^9 + 96X^8 + 83X^7 + 26X^6 + 42X^5 + 69X^4 + 19X^3 + X^2 + 16X + 4&gt;
+   </code></pre><p>   Currently, <code>fourier-primes</code> is a weak spot, it's preferred that you have a
+   needed prime beforehand.
 </p>
       </div>
     </main>

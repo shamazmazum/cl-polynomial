@@ -42,7 +42,7 @@
   <h1 class="doc-title">cl-polynomial</h1>
   <article id="article" data-section="api">
     <aside>
-      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="api.html#utility-functions--(-cl-polynomial-util-)" data-node="utility-functions--(-cl-polynomial-util-)">Utility functions (<code>cl-polynomial/util</code>)</a></li><li><a href="api.html#basic-operations-on-polynomials--(-cl-polynomial-polynomial-)" data-node="basic-operations-on-polynomials--(-cl-polynomial-polynomial-)">Basic operations on polynomials (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="api.html#algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)" data-node="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)">Algebraic operations for polynomials over a ring (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="api.html#division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)" data-node="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Division and factorization in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="api.html#factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)" data-node="factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</a></li><li><a href="api.html#auxiliary-number-theoretic-functions" data-node="auxiliary-number-theoretic-functions">Auxiliary number-theoretic functions</a></li></ol></li></ol>
+      <ol class="toc"><li><a href="index.html" data-node="index">Overview</a></li><li><a href="fft.html" data-node="fft">FFT</a></li><li><a href="api.html" data-node="api">API</a><ol><li><a href="api.html#utility-functions--(-cl-polynomial-util-)" data-node="utility-functions--(-cl-polynomial-util-)">Utility functions (<code>cl-polynomial/util</code>)</a></li><li><a href="api.html#basic-operations-on-polynomials--(-cl-polynomial-polynomial-)" data-node="basic-operations-on-polynomials--(-cl-polynomial-polynomial-)">Basic operations on polynomials (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="api.html#algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)" data-node="algebraic-operations-for-polynomials-over-a-ring--(-cl-polynomial-polynomial-)">Algebraic operations for polynomials over a ring (<code>cl-polynomial/polynomial</code>)</a></li><li><a href="api.html#division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)" data-node="division-and-factorization-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Division and factorization in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="api.html#other-operations-on-polynomials-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)" data-node="other-operations-on-polynomials-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Other operations on polynomials in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</a></li><li><a href="api.html#factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)" data-node="factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</a></li><li><a href="api.html#fft-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fft-)" data-node="fft-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fft-)">FFT in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fft</code>)</a></li><li><a href="api.html#auxiliary-number-theoretic-functions" data-node="auxiliary-number-theoretic-functions">Auxiliary number-theoretic functions</a></li></ol></li></ol>
     </aside>
     <main class="codex-section">
       <header>
@@ -84,8 +84,13 @@ of <code>list-&gt;polynomial</code>.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">map-poly</code><code class="codex-lambda-list">(fn polynomial)</code><div class="codex-docstring"><p>Given a polynomial \(\sum_n a_n x^n\) return a polynomial
 \(\sum_n fn(a_n)x^n\).</p><p>This is <code>fmap</code> for a type <code>data Poly a b = Poly [(a, b)]</code>.</p></div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">derivative</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a formal derivative of a polynomial.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">reciprocal</code><code class="codex-lambda-list">(f)</code><div class="codex-docstring">Return a reciprocal polynomial of \(f\), i.e. given \(f(x)\),
+return \(x^{\deg f} f(x^{-1})\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">monicp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial is monic</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">constantp</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Test if a polynomial has degree 0.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">palindromep</code><code class="codex-lambda-list">(f)</code><div class="codex-docstring">Return <code>T</code> if \(f\) is a palindrome, i.e. it is equal to its
+reciprocal polynomial.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">evaluate</code><code class="codex-lambda-list">(p x)</code><div class="codex-docstring">Evaluate a polynomial in \(\mathbb{Z}[x]\) at point \(x\).</div></div>
        <div class="codex-doc-node codex-variable"><code class="codex-name">+one+</code><div class="codex-docstring">Multiplicative identity</div></div>
        <div class="codex-doc-node codex-variable"><code class="codex-name">+zero+</code><div class="codex-docstring">Additive identity</div></div>
        <div class="codex-doc-node codex-variable"><code class="codex-name">+variable+</code><div class="codex-docstring">The polynomial \(x\)</div></div>
@@ -131,6 +136,19 @@ factors. An optional parameter <code>algorithm</code> can be either
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">irreduciblep</code><code class="codex-lambda-list">(f p)</code><div class="codex-docstring">Test if a polynomial \(f \in \mathbb{F}_p[x]\) is irreducible.</div></div>
      </p>
    
+   <h1 id="other-operations-on-polynomials-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fpx-)">Other operations on polynomials in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fpx</code>)</h1>
+     
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">evaluate</code><code class="codex-lambda-list">(p x q)</code><div class="codex-docstring">Evaluate a polynomial in a ring \(\mathbb{Z}_q[x]\) at point
+\(x\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">list-&gt;points</code><code class="codex-lambda-list">(list)</code><div class="codex-docstring">Coerce a list of pairs <code>(x . y)</code> to <code>points</code>. All x'es must be distinct.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">interpolate</code><code class="codex-lambda-list">(points p)</code><div class="codex-docstring"><p>Return a polynomial in \(\mathbb{F}_p[x]\) which evaluates to a
+given set of points.</p><pre><code class="lisp">(cl-polynomial/fpx:interpolate (cl-polynomial/fpx:points '((1 . 2)(4 . -2)(0 . 3))) 11)
+#&lt;CL-POLYNOMIAL/POLYNOMIAL:POLYNOMIAL - X^2 + 3&gt;
+</code></pre><p>It's safe to try to interpolate in a ring (not a field)
+\(\mathbb{Z}_q[x]\) also. In this case an error is signaled when
+there is no such interpolation.</p></div></div>
+     
+   
    <h1 id="factorization-in-\\-(-\\mathbb{z}[x]\\-)-(-cl-polynomial-zx-)">Factorization in \(\mathbb{Z}[x]\)(<code>cl-polynomial/zx</code>)</h1>
      
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">suitable-primes</code><code class="codex-lambda-list">(polynomial)</code><div class="codex-docstring">Return a suitable prime for reducing a factorization in
@@ -156,6 +174,26 @@ with minimal number of factors in \(\mathbb{F}_p[x]\).</div></div>
        <div class="codex-doc-node codex-variable"><code class="codex-name">*factors-num-bound*</code><div class="codex-docstring">When factoring a polynomial in \(\mathbb{Z}[x]\) and a number of
 factors in \(\mathbb{F}_p[x]\) exceeds this number, try another
 prime \(p\)(with at most <code>*different-primes*</code> trials).</div></div>
+     
+   
+   <h1 id="fft-in-\\-(-\\mathbb{f}_p[x]\\-)-(-cl-polynomial-fft-)">FFT in \(\mathbb{F}_p[x]\)(<code>cl-polynomial/fft</code>)</h1>
+     
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fourier-primes</code><code class="codex-lambda-list">(n)</code><div class="codex-docstring">Return primes in the form \(2^l k + 1\) where \(k\) is odd and
+\(l\) is an integer greater than zero.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">*-group-generator</code><code class="codex-lambda-list">(p)</code><div class="codex-docstring">Get a generator of a multiplicative group of a field \(\mathbb{F}_p\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">primitive-root-of-unity</code><code class="codex-lambda-list">(p n)</code><div class="codex-docstring">Get an \(n\)-th primitive root of unity in \(\mathbb{F}_p\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">pad-array</code><code class="codex-lambda-list">(array &amp;optional (n (length array)))</code><div class="codex-docstring">Pad array with zeros to the smallest power of two which is equal or
+greater than \(n\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial-&gt;vector</code><code class="codex-lambda-list">(p &amp;optional (n (1+ (p:degree p))))</code><div class="codex-docstring">Convert a polynomial to a vector suitable for use in <code>fft</code>
+function. The resulting vector has a size which is the smallest
+positive integral power of two which is greater or equal to \(n\). If
+\(n\) is supplied, it must be greater than the degree of \(p\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fft</code><code class="codex-lambda-list">(array p ω)</code><div class="codex-docstring">Perform forward FFT of <code>array</code> in a field
+\(\mathbb{F}_p\). \(\omega\) is an \(n\)-th primitive root of
+unity in that field, where \(n\) is the length of <code>array</code>. The
+length \(n\) must be a positive integral power of two.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">ifft</code><code class="codex-lambda-list">(array p ω)</code><div class="codex-docstring">Invert FFT.<pre><code class="lisp">(every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
+</code></pre></div></div>
      
    
    <h1 id="auxiliary-number-theoretic-functions">Auxiliary number-theoretic functions</h1>

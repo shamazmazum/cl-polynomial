@@ -19,4 +19,4 @@ Here is some books and links which I found useful
   (contains typos!)
 * https://en.wikipedia.org/wiki/Polynomial_greatest_common_divisor#Subresultant_pseudo-remainder_sequence
 * Discrete-Time Signal Processing, 3-rd edition by Alan Oppenheim and Ronald
-  Schafer (many useful information about FFT)
+  Schafer (much useful information about FFT)

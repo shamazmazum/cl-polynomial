@@ -118,18 +118,32 @@ greater than \\(n\\)."
                 (aref array (reverse-bits length i))))
     result))
 
+;; Collect a list of "group ωs", that is ω^{2^{steps-k-1}} for k = 0,1,…,steps-1
+(sera:-> ωs (integer alex:positive-fixnum u:prime)
+         (values list &optional))
+(defun ωs (ω n p)
+  (declare (optimize (speed 3)))
+  (labels ((%go (acc k)
+             (declare (type fixnum k))
+             (if (zerop k) acc
+                 (let ((ω (car acc)))
+                   (%go (cons (u:mod-sym (expt ω 2) p) acc)
+                        (1- k))))))
+    (%go (list ω) (1- n))))
+
 ;; Requirement: Array length is a power of 2
 (sera:-> %fft! ((simple-array integer (*)) u:prime integer)
          (values (simple-array integer (*)) &optional))
 (defun %fft! (array p ω)
   (declare (optimize (speed 3)))
   (let* ((length (length array))
-         (steps  (integer-length (1- length))))
+         (steps  (integer-length (1- length)))
+         (ωs (ωs ω steps p)))
     (loop for s below steps
           for pair-offset  = (ash 1 s)
           for ngroups = (ash 1 (- steps s 1))
           for group-size = pair-offset ;; number of evens
-          for m = (u:expt-mod ω ngroups p) do
+          for m in ωs do
           (loop for i below ngroups
                 for group-offset fixnum from 0 by (* group-size 2) do
                 (loop for j below group-size

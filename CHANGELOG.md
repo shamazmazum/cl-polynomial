@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.3.0
+
+New features:
+
+* RECIPROCAL and PALYNDROMEP functions were added.
+* Evaluation (any ring) and interpolation (over finite fields) of polynomials.
+* FFT as a special case of above.
+
 ## Version 0.2.3
 
 * Improvement: Do not use floating point functions when computing Mignotte

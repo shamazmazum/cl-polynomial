@@ -1,12 +1,37 @@
 @begin[ref=index](section)
    @title(Overview)
-   @c(cl-polynomial) is a library for factoring polynomials in one variable over
-   finite fields with a prime number of elements \(p\) or over integers. @b(NB:)
-   Many provided functions require \(p\) as their last argument. No special
-   tests are done to check if \(p\) is really a prime and behaviour is undefined
-   if it is not (e.g. some functions can simply become non-terminating).
+   @c(cl-polynomial) is a library for manipulating polynomials in rings
+   \(\mathbb{Z}[x]\) and \(\mathbb{F}_p[x]\), \(p\) being prime.
 
-   Few examples:
+   Supported features for any polynomial (in the package
+   @c(cl-polynomial/polynomial)):
+   @begin(list)
+     @item(Addition, subtraction, multiplication, exponentiation)
+     @item(Evaluation)
+     @item(Derivative)
+     @item(Various predicates)
+   @end(list)
+   Supported features for any polynomial (in the packages
+   @c(cl-polynomial/fpx) for polynomials over finite fields and
+   @c(cl-polynomial/zx) for polynomials over integers):
+   @begin(list)
+     @item(GCD)
+     @item(Factorization)
+   @end(list)
+   Additional features for polynomials over finite fields (in the packages
+   @c(cl-polynomial/fpx) and @c(cl-polynomial/fft)):
+   @begin(list)
+     @item(Division)
+     @item(Interpolation)
+     @item(Fast Fourier transform)
+   @end(list)
+   Additional features for polynomials over integers (in the package
+   @c(cl-polynomial/zx)):
+   @begin(list).
+     @item(Cyclotomic polynomials)
+   @end(list)
+
+   A few examples:
    @begin[lang=lisp](code)
 CL-USER> (defpackage example
            (:use #:cl)
@@ -16,19 +41,120 @@ CL-USER> (defpackage example
 #<PACKAGE "EXAMPLE">
 CL-USER> (in-package :example)
 #<PACKAGE "EXAMPLE">
+
 EXAMPLE> (p:sequence->polynomial #*1110010101001)
 #<P:POLYNOMIAL X^12 + X^9 + X^7 + X^5 + X^2 + X + 1>
-EXAMPLE> (fpx:factor * 11)
+EXAMPLE> (fpx:factor * 11) ; Factorization over a finite field with p = 11
 ((1 . #<P:POLYNOMIAL X^6 - 5X^5 + 4X^4 + 3X^3 - 3X^2 + 5X - 2>)
  (1 . #<P:POLYNOMIAL X + 5>) (1 . #<P:POLYNOMIAL X^5 - X^3 + 1>))
 1
+
 EXAMPLE> (p:list->polynomial '(2 1 -1 -1 -4 -2 -2 1 1 2))
 #<P:POLYNOMIAL 2X^9 + X^8 + X^7 - 2X^6 - 2X^5 - 4X^4 - X^3 - X^2 + X + 2>
-EXAMPLE> (zx:factor *)
+EXAMPLE> (zx:factor *) ; Factorization over integers
 ((1 . #<P:POLYNOMIAL X^4 - X - 1>) (1 . #<P:POLYNOMIAL X^3 + X^2 - 1>)
  (1 . #<P:POLYNOMIAL 2X^2 - X + 2>))
 1
+
+EXAMPLE> (let ((p (p:multiply (p:expt (p:list->polynomial '(1 2 3)) 2)
+                              (p:list->polynomial '(1 0 1)))))
+           (zx:gcd p (p:derivative p))) ; GCD
+#<P:POLYNOMIAL 3X^2 + 2X + 1>
+
+EXAMPLE> (mapcar (lambda (x) (p:evaluate * x)) '(0 1 2)) ; Evaluation
+(1 6 17)
+
+EXAMPLE> (fpx:interpolate
+          (fpx:list->points
+           (mapcar #'cons '(0 1 2) '(1 6 17)))
+          41) ; Interpolation
+#<P:POLYNOMIAL 3X^2 + 2X + 1>
+
+EXAMPLE> (fpx:divide
+          (p:list->polynomial '(3 2 3))
+          (p:list->polynomial '(-1 1))
+          7) ; Division in a finite field (p = 7)
+#<P:POLYNOMIAL 3X - 2>
+#<P:POLYNOMIAL 1>
+
+EXAMPLE> (fpx:modulo
+          (p:add (p:multiply (p:list->polynomial '(-2 3))
+                             (p:list->polynomial '(-1 1)))
+                 p:+one+)
+          7) ; Check the previous result
+#<P:POLYNOMIAL 3X^2 + 2X + 3>
    @end(code)
+@end(section)
+
+@begin(section)
+   @title(FFT)
+   Here is some explanation of how FFT can be used. First of all, in
+   \(\mathbb{C}[x]\) DFT (discrete Fourier transform) can be performed for any
+   number of evaluation points. In a finite field \(\mathbb{F}_p[x]\), the
+   number of evaluation points \(n\) must divide \(p - 1\). This implementation
+   works with \(n = 2^k, k \in \mathbb{N}\). Of course, a condition \(n > \deg
+   f\) must be satisfied, so that FFT of \(f\) can be inverted. This is a
+   typical workflow for working with FFTs (all functions are in the package
+   @c(cl-polynomial/fft)):
+   @begin(enum)
+     @item(Select a proper \(n > \deg f\).)
+     @item(Convert \(f\) to an array of coefficients using
+   @c(polynomial->vector). This vector will have the length \(m\) which if a
+   power of 2.)
+     @item(Choose a prime \(p = 2^k l + 1\), \(l\) being odd so that \(m\)
+   divides \(p-1\). This can be done using @c(fourier-primes).)
+     @item(Generate a primitive \(m\)-th root of unity in \(\mathbb{F}_p\) with
+   @c(primitive-root-of-unity).)
+     @item(Evaluate @c(fft) and then @c(ifft) when needed.)
+   @end(enum)
+
+   Here is an example of multiplication of polynomials over integers via FFT:
+   @begin[lang=lisp](code)
+(defpackage example
+           (:use #:cl)
+           (:local-nicknames (#:p   #:cl-polynomial/polynomial)
+                             (#:si  #:stateless-iterators)
+                             (#:fft #:cl-polynomial/fft)))
+(in-package :example)
+
+(let* ((a (p:list->polynomial
+           (loop repeat 5 collect (random 10))))
+       (b (p:list->polynomial
+           (loop repeat 10 collect (random 10))))
+       ;; Convert to vectors
+       (v1 (fft:polynomial->vector a (+ 5 10)))
+       (v2 (fft:polynomial->vector b (+ 5 10)))
+       ;; Find large enough prime
+       (p (si:consume-one
+           (si:drop-while
+            (lambda (x)
+              (< x (* 50 (+ 5 10) 2)))
+            (fft:fourier-primes (length v1)))))
+       ;; Find a 16-th primitive root of unity
+       (ω (fft:primitive-root-of-unity p (length v1)))
+       ;; Compute evaluation homomorphism
+       (fft1 (fft:fft v1 p ω))
+       (fft2 (fft:fft v2 p ω))
+       ;; Multiply polynomials under evaluation homomorphism and
+       ;; interpolate back into polynomials
+       (mv (fft:ifft (map '(vector integer) #'* fft1 fft2) p ω))
+       (m (p:sequence->polynomial mv)))
+  (values
+   a b
+   (p:multiply a b) ; "Conventional" multiplication
+   m))              ; Multiplication via FFT
+   @end(code)
+
+   Evaluation of this code may give
+   @begin(code)
+#<P:POLYNOMIAL 9X^4 + 7X^3 + X^2 + 4>
+#<P:POLYNOMIAL 3X^9 + 4X^8 + 2X^7 + X^6 + X^5 + 8X^4 + 2X^3 + 4X + 1>
+#<P:POLYNOMIAL 27X^13 + 57X^12 + 49X^11 + 27X^10 + 30X^9 + 96X^8 + 83X^7 + 26X^6 + 42X^5 + 69X^4 + 19X^3 + X^2 + 16X + 4>
+#<P:POLYNOMIAL 27X^13 + 57X^12 + 49X^11 + 27X^10 + 30X^9 + 96X^8 + 83X^7 + 26X^6 + 42X^5 + 69X^4 + 19X^3 + X^2 + 16X + 4>
+   @end(code)
+
+   Currently, @c(fourier-primes) is a weak spot, it's preferred that you have a
+   needed prime beforehand.
 @end(section)
 
 @begin(section)
@@ -113,6 +239,18 @@ EXAMPLE> (zx:factor *)
        @cl:doc(function cyclotomic)
        @cl:doc(variable *different-primes*)
        @cl:doc(variable *factors-num-bound*)
+     )
+   @end(section)
+   @begin(section)
+     @title(FFT in \(\mathbb{F}_p[x]\) (@c(cl-polynomial/fft)))
+     @cl:with-package[name="cl-polynomial/fft"](
+       @cl:doc(function fourier-primes)
+       @cl:doc(function *-group-generator)
+       @cl:doc(function primitive-root-of-unity)
+       @cl:doc(function pad-array)
+       @cl:doc(function polynomial->vector)
+       @cl:doc(function fft)
+       @cl:doc(function ifft)
      )
    @end(section)
    @begin(section)

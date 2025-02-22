@@ -19,7 +19,8 @@
 (sera:-> fourier-primes (unsigned-byte)
          (values si:iterator &optional))
 (defun fourier-primes (n)
-  "Return primes in the form \\(k n + 1\\) where \\(k\\) is odd and \\(n = 2^l, l > 0\\)."
+  "Return primes in the form \\(2^l k + 1\\) where \\(k\\) is odd and
+\\(l\\) is an integer greater than zero."
   (unless (zerop (logand n (1- n)))
     (error "N must be a power of 2."))
   (si:filter
@@ -64,6 +65,7 @@
 (sera:-> primitive-root-of-unity (u:prime unsigned-byte)
          (values integer &optional))
 (defun primitive-root-of-unity (p n)
+  "Get an \\(n\\)-th primitive root of unity in \\(\\mathbb{F}_p\\)."
   (declare (optimize (speed 3)))
   (unless (zerop (rem (1- p) n))
     (error "There is no ~d-th roots of unity in this field" n))
@@ -176,7 +178,7 @@ greater than \\(n\\)."
   "Perform forward FFT of @c(array) in a field
 \\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
 unity in that field, where \\(n\\) is the length of @c(array). The
-length \\(n\\) must be a positive integer power of two."
+length \\(n\\) must be a positive integral power of two."
   (sanity-checks array p ω)
   (%fft! (reorder-input array) p ω))
 
@@ -197,7 +199,7 @@ length \\(n\\) must be a positive integer power of two."
 (defun polynomial->vector (p &optional (n (1+ (p:degree p))))
   "Convert a polynomial to a vector suitable for use in @c(fft)
 function. The resulting vector has a size which is the smallest
-positive integer power of two which is greater or equal to \\(n\\). If
+positive integral power of two which is greater or equal to \\(n\\). If
 \\(n\\) is supplied, it must be greater than the degree of \\(p\\)."
   (unless (> n (p:degree p))
     (error "N must be greater than the degree of P."))

@@ -16,7 +16,7 @@
 (in-package :cl-polynomial/fft)
 
 ;; TODO: requires a faster prime source
-(sera:-> fourier-primes (unsigned-byte)
+(sera:-> fourier-primes (fixnum)
          (values si:iterator &optional))
 (defun fourier-primes (n)
   "Return primes in the form \\(2^l k + 1\\) where \\(k\\) is odd and
@@ -29,23 +29,23 @@
        (and (integerp m) (oddp m))))
    z:*prime-source*))
 
-(sera:-> unique-factors ((integer 0))
+(sera:-> unique-factors (alex:positive-fixnum)
          (values list &optional))
 (defun unique-factors (n)
   "Return unique prime factors of \\(n\\) in ascending order."
   (declare (optimize (speed 3)))
   (reduce
    (lambda (acc x)
+     (declare (type fixnum x))
      (let ((last (car acc)))
-       (declare (type integer x)
-                (type (or null integer) last))
+       (declare (type (or null fixnum) last))
        (if (and last (= x last)) acc
            (cons x acc))))
    (z:factor n)
    :initial-value nil))
 
 (sera:-> *-group-generator (u:prime)
-         (values integer &optional))
+         (values fixnum &optional))
 (defun *-group-generator (p)
   "Get a generator of a multiplicative group of a field \\(\\mathbb{F}_p\\)."
   (declare (optimize (speed 3)))
@@ -55,15 +55,14 @@
                  (every (lambda (m)
                           (declare (type u:prime m))
                           (let ((a (/ (1- p) m)))
-                            (declare (type integer a))
                             (/= (u:expt-mod n a p) 1)))
                         factors)))
           (loop for gen = (+ (random (- p 2)) 2)
                 until (generatorp gen)
                 finally (return gen))))))
 
-(sera:-> primitive-root-of-unity (u:prime unsigned-byte)
-         (values integer &optional))
+(sera:-> primitive-root-of-unity (u:prime alex:positive-fixnum)
+         (values fixnum &optional))
 (defun primitive-root-of-unity (p n)
   "Get an \\(n\\)-th primitive root of unity in \\(\\mathbb{F}_p\\)."
   (declare (optimize (speed 3)))
@@ -71,7 +70,6 @@
     (error "There is no ~d-th roots of unity in this field" n))
   (let ((gen (*-group-generator p))
         (m (/ (1- p) n)))
-    (declare (type integer m))
     (u:expt-mod gen m p)))
 
 (sera:-> padded-length (alex:positive-fixnum)
@@ -101,8 +99,8 @@ greater than \\(n\\)."
          array)))
 
 ;; Requirement: Array length is a power of 2
-(sera:-> reverse-bits ((integer 1) unsigned-byte)
-         (values unsigned-byte &optional))
+(sera:-> reverse-bits (alex:positive-fixnum alex:non-negative-fixnum)
+         (values alex:non-negative-fixnum &optional))
 (declaim (inline reverse-bits))
 (defun reverse-bits (length n)
   (loop with length = (integer-length (1- length))
@@ -123,7 +121,7 @@ greater than \\(n\\)."
     result))
 
 ;; Collect a list of "group ωs", that is ω^{2^{steps-k-1}} for k = 0,1,…,steps-1
-(sera:-> ωs (integer alex:positive-fixnum u:prime)
+(sera:-> ωs (fixnum alex:positive-fixnum u:prime)
          (values list &optional))
 (defun ωs (ω n p)
   (declare (optimize (speed 3)))
@@ -136,7 +134,7 @@ greater than \\(n\\)."
     (%go (list ω) (1- n))))
 
 ;; Requirement: Array length is a power of 2
-(sera:-> %fft! ((simple-array fixnum (*)) u:prime integer)
+(sera:-> %fft! ((simple-array fixnum (*)) u:prime fixnum)
          (values (simple-array fixnum (*)) &optional))
 (defun %fft! (array p ω)
   (declare (optimize (speed 3)))
@@ -172,7 +170,7 @@ greater than \\(n\\)."
     (unless (= (u:expt-mod ω n p) 1)
       (error "ω is not a root of unity we need"))))
 
-(sera:-> fft ((simple-array fixnum (*)) u:prime integer)
+(sera:-> fft ((simple-array fixnum (*)) u:prime fixnum)
          (values (simple-array fixnum (*)) &optional))
 (defun fft (array p ω)
   "Perform forward FFT of @c(array) in a field
@@ -182,7 +180,7 @@ length \\(n\\) must be a positive integral power of two."
   (sanity-checks array p ω)
   (%fft! (reorder-input array) p ω))
 
-(sera:-> ifft ((simple-array fixnum (*)) u:prime integer)
+(sera:-> ifft ((simple-array fixnum (*)) u:prime fixnum)
          (values (simple-array fixnum (*)) &optional))
 (defun ifft (array p ω)
   "Invert FFT.

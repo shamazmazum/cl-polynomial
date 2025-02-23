@@ -35,6 +35,7 @@
 ;; fields. ZX:LIFT-FACTORS *REQUIRES* integers here.
 (sera:-> mod-sym (integer prime-power)
          (values integer &optional))
+(declaim (inline mod-sym))
 (defun mod-sym (n q)
   "Compute \\(n \\mod q\\). The result is in a range \\(0 \\dots 1\\)
 if \\(q = 2\\) or \\(-(q-1)/2 \\dots (q-1)/2\\) if \\(q > 2\\)."

@@ -505,12 +505,13 @@
                            (si:range 1 n)))))))
 
 (test ifft-fft-identity
-  (loop with p = 11777
-        with n = 512
+  (loop with p = 163841
+        with n = 32768
         repeat 5000
         for a = (make-array n
-                            :element-type 'integer
-                            :initial-contents (loop repeat n collect (- (random 20) 10)))
+                            :element-type 'fixnum
+                            :initial-contents (loop repeat n collect
+                                                    (- (random 163840) 81920)))
         for ω = (fft:primitive-root-of-unity p n)
         do
         (is-true (every #'= a (fft:ifft (fft:fft a p ω) p ω)))))
@@ -520,17 +521,17 @@
         with n = 512
         repeat 5000
         for a = (make-array (/ n 2)
-                            :element-type 'integer
+                            :element-type 'fixnum
                             :initial-contents (loop repeat (/ n 2)
                                                     collect (- (random 20) 10)))
         for b = (make-array (/ n 2)
-                            :element-type 'integer
+                            :element-type 'fixnum
                             :initial-contents (loop repeat (/ n 2)
                                                     collect (- (random 20) 10)))
         for ω = (fft:primitive-root-of-unity p n)
         for ft1 = (fft:fft (fft:pad-array a n) p ω)
         for ft2 = (fft:fft (fft:pad-array b n) p ω)
-        for mul = (map '(vector integer) #'* ft1 ft2)
+        for mul = (map '(vector fixnum) #'* ft1 ft2)
         for c = (fft:ifft mul p ω) do
         (is (p:polynomial= (p:sequence->polynomial c)
                            (p:multiply
@@ -542,8 +543,9 @@
         with n = 16
         repeat 1000
         for a = (make-array n
-                            :element-type 'integer
-                            :initial-contents (loop repeat n collect (random 500)))
+                            :element-type 'fixnum
+                            :initial-contents (loop repeat n collect
+                                                    (- (random 1008) 504)))
         for f = (p:sequence->polynomial a)
         for ω = (fft:primitive-root-of-unity p n)
         for fft = (fft:fft a p ω)

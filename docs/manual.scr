@@ -137,7 +137,7 @@ EXAMPLE> (fpx:modulo
        (fft2 (fft:fft v2 p ω))
        ;; Multiply polynomials under evaluation homomorphism and
        ;; interpolate back into polynomials
-       (mv (fft:ifft (map '(vector integer) #'* fft1 fft2) p ω))
+       (mv (fft:ifft (map '(vector fixnum) #'* fft1 fft2) p ω))
        (m (p:sequence->polynomial mv)))
   (values
    a b

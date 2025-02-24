@@ -505,13 +505,13 @@
                            (si:range 1 n)))))))
 
 (test ifft-fft-identity
-  (loop with p = 163841
-        with n = 32768
+  (loop with p = 31916033
+        with n = 65536
         repeat 5000
         for a = (make-array n
                             :element-type 'fixnum
                             :initial-contents (loop repeat n collect
-                                                    (- (random 163840) 81920)))
+                                                    (- (random 31916033) 15958016)))
         for ω = (fft:primitive-root-of-unity p n)
         do
         (is-true (every #'= a (fft:ifft (fft:fft a p ω) p ω)))))

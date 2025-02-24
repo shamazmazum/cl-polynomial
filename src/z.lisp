@@ -55,24 +55,33 @@
       ((evenp length) 1)
       (t -1))))
 
-;; https://en.wikipedia.org/wiki/Formula_for_primes
-(sera:-> get-prime ((cons unsigned-byte alex:positive-fixnum))
-         (values u:prime (cons unsigned-byte alex:positive-fixnum) &optional))
-(defun get-prime (state)
-  (let* ((n! (car state))
-         (n  (cdr state))
-         (%n (1+ n)))
-    (values
-     (+ (* (1- n) (floor (mod n! %n) n)) 2)
-     (cons (* n! %n) %n))))
+;; The sieve of eratosthenes
+(sera:-> sieve (alex:positive-fixnum)
+         (values (simple-array bit (*)) &optional))
+(defun sieve (n)
+  (declare (optimize (speed 3)))
+  (let ((sieve (make-array n :element-type 'bit :initial-element 0)))
+    (labels ((%go (p)
+               (loop for i from (expt p 2) below n by p do
+                     (setf (aref sieve i) 1))
+               (let ((%p (position 0 sieve :start (1+ p))))
+                 (if %p (%go %p) sieve))))
+      (%go 2))))
+
+(sera:-> eratosthenes-primes (alex:positive-fixnum)
+         (values si:iterator &optional))
+(defun eratosthenes-primes (n)
+  "Make a fast iterator over primes less than or equal to @c(n)"
+  (let ((sieve (sieve (1+ n))))
+    (si:filter
+     (lambda (n) (zerop (aref sieve n)))
+     (si:range 2 (1+ n)))))
 
 (declaim (type si:iterator *prime-source*))
 (defparameter *prime-source*
   (si:concat
-   (si:singleton 2)
-   (si:filter
-    (lambda (x) (/= x 2))
-    (si:unfold #'get-prime '(2 . 2))))
+   (eratosthenes-primes 100000000)
+   (si:undefined "Cannot compute primes beyond this limit ;("))
   "Iterator which returns primes.
 
 @begin[lang=lisp](code)

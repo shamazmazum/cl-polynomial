@@ -554,3 +554,16 @@
                               (u:mod-sym (p:evaluate f (expt ω k)) p))
                             (loop for k below n collect k))
         do (is-true (every #'= fft slow-dft))))
+
+(test inplace-fft
+  (loop with p = 31916033
+        with n = 65536
+        repeat 1000
+        for a = (make-array n
+                            :element-type 'fixnum
+                            :initial-contents (loop repeat n collect
+                                                    (- (random 31916033) 15958016)))
+        for ω = (fft:primitive-root-of-unity n p)
+        do
+        (is-true (every #'= (fft:fft a ω p) (fft:fft! (copy-seq a) ω p)))
+        (is-true (every #'= (fft:ifft a ω p) (fft:ifft! (copy-seq a) ω p)))))

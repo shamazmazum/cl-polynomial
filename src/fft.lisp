@@ -10,8 +10,8 @@
            #:*-group-generator
            #:primitive-root-of-unity
            #:pad-array
-           #:fft
-           #:ifft
+           #:fft  #:fft!
+           #:ifft #:ifft!
            #:polynomial->vector))
 (in-package :cl-polynomial/fft)
 
@@ -109,16 +109,28 @@ greater than \\(n\\)."
         fixnum))
 
 ;; Requirement: Array length is a power of 2
+;; SRC and DST may be the same array
+(sera:-> reorder-input! ((simple-array fixnum (*)) (simple-array fixnum (*)))
+         (values (simple-array fixnum (*)) &optional))
+(defun reorder-input! (src dst)
+  (declare (optimize (speed 3)))
+  (let ((length (length src)))
+    (assert (= (length dst) length))
+    (loop for i below length
+          for j = (reverse-bits length i)
+          when (<= i j) do
+          (psetf (aref dst i)
+                 (aref src j)
+                 (aref dst j)
+                 (aref src i))))
+    dst)
+
 (sera:-> reorder-input ((simple-array fixnum (*)))
          (values (simple-array fixnum (*)) &optional))
-(defun reorder-input (array)
-  (declare (optimize (speed 3)))
-  (let* ((length (length array))
-         (result (make-array length :element-type 'fixnum)))
-    (loop for i below length do
-          (setf (aref result i)
-                (aref array (reverse-bits length i))))
-    result))
+(declaim (inline reorder-input))
+(defun reorder-input (src)
+  (let ((dst (make-array (length src) :element-type 'fixnum)))
+    (reorder-input! src dst)))
 
 ;; Collect a list of "group ωs", that is ω^{2^{steps-k-1}} for k = 0,1,…,steps-1
 (sera:-> ωs (fixnum alex:positive-fixnum u:prime)
@@ -177,6 +189,7 @@ greater than \\(n\\)."
 \\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
 unity in that field, where \\(n\\) is the length of @c(array). The
 length \\(n\\) must be a positive integral power of two."
+  (declare (optimize (speed 3)))
   (sanity-checks array ω p)
   (%fft! (reorder-input array) ω p))
 
@@ -188,9 +201,30 @@ length \\(n\\) must be a positive integral power of two."
 @begin[lang=lisp](code)
 (every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
 @end(code)"
+  (declare (optimize (speed 3)))
   (sanity-checks array ω p)
   (renormalize
    (%fft! (reorder-input array) (u:invert-integer ω p) p) p))
+
+(sera:-> fft! ((simple-array fixnum (*)) fixnum u:prime)
+         (values (simple-array fixnum (*)) &optional))
+(defun fft! (array ω p)
+  "The same as @c(fft) but modifies its argument instead of returning
+a new array."
+  (declare (optimize (speed 3)))
+  (sanity-checks array ω p)
+  (%fft! (reorder-input! array array) ω p))
+
+(sera:-> ifft! ((simple-array fixnum (*)) fixnum u:prime)
+         (values (simple-array fixnum (*)) &optional))
+(defun ifft! (array ω p)
+    "The same as @c(ifft) but modifies its argument instead of returning
+a new array."
+  (declare (optimize (speed 3)))
+  (sanity-checks array ω p)
+  (renormalize
+   (%fft! (reorder-input! array array)
+          (u:invert-integer ω p) p) p))
 
 (sera:-> polynomial->vector (p:polynomial &optional alex:positive-fixnum)
          (values (simple-array fixnum (*)) &optional))

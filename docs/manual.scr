@@ -251,6 +251,8 @@ EXAMPLE> (fpx:modulo
        @cl:doc(function polynomial->vector)
        @cl:doc(function fft)
        @cl:doc(function ifft)
+       @cl:doc(function fft!)
+       @cl:doc(function ifft!)
      )
    @end(section)
    @begin(section)

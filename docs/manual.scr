@@ -131,13 +131,13 @@ EXAMPLE> (fpx:modulo
               (< x (* 50 (+ 5 10) 2)))
             (fft:fourier-primes (length v1)))))
        ;; Find a 16-th primitive root of unity
-       (ω (fft:primitive-root-of-unity p (length v1)))
+       (ω (fft:primitive-root-of-unity (length v1) p))
        ;; Compute evaluation homomorphism
-       (fft1 (fft:fft v1 p ω))
-       (fft2 (fft:fft v2 p ω))
+       (fft1 (fft:fft v1 ω p))
+       (fft2 (fft:fft v2 ω p))
        ;; Multiply polynomials under evaluation homomorphism and
        ;; interpolate back into polynomials
-       (mv (fft:ifft (map '(vector fixnum) #'* fft1 fft2) p ω))
+       (mv (fft:ifft (map '(vector fixnum) #'* fft1 fft2) ω p))
        (m (p:sequence->polynomial mv)))
   (values
    a b

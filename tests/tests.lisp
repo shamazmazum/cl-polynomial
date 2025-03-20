@@ -499,7 +499,7 @@
     (si:do-iterator (r (si:range 1 12))
       (let* ((n (expt 2 r))
              (p (si:consume-one (fft:fourier-primes n)))
-             (g (fft:primitive-root-of-unity p n)))
+             (g (fft:primitive-root-of-unity n p)))
         (is (= (u:mod-sym (expt g n) p) 1))
         (is-false (si:some (lambda (m) (= (u:mod-sym (expt g m) p) 1))
                            (si:range 1 n)))))))
@@ -512,9 +512,9 @@
                             :element-type 'fixnum
                             :initial-contents (loop repeat n collect
                                                     (- (random 31916033) 15958016)))
-        for ω = (fft:primitive-root-of-unity p n)
+        for ω = (fft:primitive-root-of-unity n p)
         do
-        (is-true (every #'= a (fft:ifft (fft:fft a p ω) p ω)))))
+        (is-true (every #'= a (fft:ifft (fft:fft a ω p) ω p)))))
 
 (test fft-polynomial-multiplication
   (loop with p = 51713
@@ -528,11 +528,11 @@
                             :element-type 'fixnum
                             :initial-contents (loop repeat (/ n 2)
                                                     collect (- (random 20) 10)))
-        for ω = (fft:primitive-root-of-unity p n)
-        for ft1 = (fft:fft (fft:pad-array a n) p ω)
-        for ft2 = (fft:fft (fft:pad-array b n) p ω)
+        for ω = (fft:primitive-root-of-unity n p)
+        for ft1 = (fft:fft (fft:pad-array a n) ω p)
+        for ft2 = (fft:fft (fft:pad-array b n) ω p)
         for mul = (map '(vector fixnum) #'* ft1 ft2)
-        for c = (fft:ifft mul p ω) do
+        for c = (fft:ifft mul ω p) do
         (is (p:polynomial= (p:sequence->polynomial c)
                            (p:multiply
                             (p:sequence->polynomial a)
@@ -547,8 +547,8 @@
                             :initial-contents (loop repeat n collect
                                                     (- (random 1008) 504)))
         for f = (p:sequence->polynomial a)
-        for ω = (fft:primitive-root-of-unity p n)
-        for fft = (fft:fft a p ω)
+        for ω = (fft:primitive-root-of-unity n p)
+        for fft = (fft:fft a ω p)
         for slow-dft = (map '(vector integer)
                             (lambda (k)
                               (u:mod-sym (p:evaluate f (expt ω k)) p))

@@ -61,9 +61,9 @@
                 until (generatorp gen)
                 finally (return gen))))))
 
-(sera:-> primitive-root-of-unity (u:prime alex:positive-fixnum)
+(sera:-> primitive-root-of-unity (alex:positive-fixnum u:prime)
          (values fixnum &optional))
-(defun primitive-root-of-unity (p n)
+(defun primitive-root-of-unity (n p)
   "Get an \\(n\\)-th primitive root of unity in \\(\\mathbb{F}_p\\)."
   (declare (optimize (speed 3)))
   (unless (zerop (rem (1- p) n))
@@ -134,9 +134,9 @@ greater than \\(n\\)."
     (%go (list ω) (1- n))))
 
 ;; Requirement: Array length is a power of 2
-(sera:-> %fft! ((simple-array fixnum (*)) u:prime fixnum)
+(sera:-> %fft! ((simple-array fixnum (*)) fixnum u:prime)
          (values (simple-array fixnum (*)) &optional))
-(defun %fft! (array p ω)
+(defun %fft! (array ω p)
   (declare (optimize (speed 3)))
   (let* ((length (length array))
          (steps  (integer-length (1- length)))
@@ -163,34 +163,34 @@ greater than \\(n\\)."
     array))
 
 (declaim (inline sanity-checks))
-(defun sanity-checks (array p ω)
+(defun sanity-checks (array ω p)
   (let ((n (length array)))
     (unless (zerop (logand n (1- n)))
       (error "Length of the input array is not a power of 2"))
     (unless (= (u:expt-mod ω n p) 1)
       (error "ω is not a root of unity we need"))))
 
-(sera:-> fft ((simple-array fixnum (*)) u:prime fixnum)
+(sera:-> fft ((simple-array fixnum (*)) fixnum u:prime)
          (values (simple-array fixnum (*)) &optional))
-(defun fft (array p ω)
+(defun fft (array ω p)
   "Perform forward FFT of @c(array) in a field
 \\(\\mathbb{F}_p\\). \\(\\omega\\) is an \\(n\\)-th primitive root of
 unity in that field, where \\(n\\) is the length of @c(array). The
 length \\(n\\) must be a positive integral power of two."
-  (sanity-checks array p ω)
-  (%fft! (reorder-input array) p ω))
+  (sanity-checks array ω p)
+  (%fft! (reorder-input array) ω p))
 
-(sera:-> ifft ((simple-array fixnum (*)) u:prime fixnum)
+(sera:-> ifft ((simple-array fixnum (*)) fixnum u:prime)
          (values (simple-array fixnum (*)) &optional))
-(defun ifft (array p ω)
+(defun ifft (array ω p)
   "Invert FFT.
 
 @begin[lang=lisp](code)
 (every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
 @end(code)"
-  (sanity-checks array p ω)
+  (sanity-checks array ω p)
   (renormalize
-   (%fft! (reorder-input array) p (u:invert-integer ω p)) p))
+   (%fft! (reorder-input array) (u:invert-integer ω p) p) p))
 
 (sera:-> polynomial->vector (p:polynomial &optional alex:positive-fixnum)
          (values (simple-array fixnum (*)) &optional))

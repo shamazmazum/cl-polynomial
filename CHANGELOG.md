@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.4.0
+
+* Incompatible change: FFT is now calculated for arrays of fixnums rather than
+  integers.
+* FFT: the second and the third arguments are flipped (i.e. you must write `(fft
+  array ω p)` and not `(fft array p ω)`. This is for consistency with other
+  functions in this library.
+* Add FFT! and IFFT! functions which modify their argument ("true" inplace FFT).
+
 ## Version 0.3.0
 
 New features:

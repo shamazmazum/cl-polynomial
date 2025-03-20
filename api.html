@@ -181,19 +181,23 @@ prime \(p\)(with at most <code>*different-primes*</code> trials).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fourier-primes</code><code class="codex-lambda-list">(n)</code><div class="codex-docstring">Return primes in the form \(2^l k + 1\) where \(k\) is odd and
 \(l\) is an integer greater than zero.</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">*-group-generator</code><code class="codex-lambda-list">(p)</code><div class="codex-docstring">Get a generator of a multiplicative group of a field \(\mathbb{F}_p\).</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">primitive-root-of-unity</code><code class="codex-lambda-list">(p n)</code><div class="codex-docstring">Get an \(n\)-th primitive root of unity in \(\mathbb{F}_p\).</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">primitive-root-of-unity</code><code class="codex-lambda-list">(n p)</code><div class="codex-docstring">Get an \(n\)-th primitive root of unity in \(\mathbb{F}_p\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">pad-array</code><code class="codex-lambda-list">(array &amp;optional (n (length array)))</code><div class="codex-docstring">Pad array with zeros to the smallest power of two which is equal or
 greater than \(n\).</div></div>
        <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">polynomial-&gt;vector</code><code class="codex-lambda-list">(p &amp;optional (n (1+ (p:degree p))))</code><div class="codex-docstring">Convert a polynomial to a vector suitable for use in <code>fft</code>
 function. The resulting vector has a size which is the smallest
 positive integral power of two which is greater or equal to \(n\). If
 \(n\) is supplied, it must be greater than the degree of \(p\).</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fft</code><code class="codex-lambda-list">(array p ω)</code><div class="codex-docstring">Perform forward FFT of <code>array</code> in a field
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fft</code><code class="codex-lambda-list">(array ω p)</code><div class="codex-docstring">Perform forward FFT of <code>array</code> in a field
 \(\mathbb{F}_p\). \(\omega\) is an \(n\)-th primitive root of
 unity in that field, where \(n\) is the length of <code>array</code>. The
 length \(n\) must be a positive integral power of two.</div></div>
-       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">ifft</code><code class="codex-lambda-list">(array p ω)</code><div class="codex-docstring">Invert FFT.<pre><code class="lisp">(every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">ifft</code><code class="codex-lambda-list">(array ω p)</code><div class="codex-docstring">Invert FFT.<pre><code class="lisp">(every #'= a (ifft (fft a p ω) p ω)) ; Evaluates to T
 </code></pre></div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">fft!</code><code class="codex-lambda-list">(array ω p)</code><div class="codex-docstring">The same as <code>fft</code> but modifies its argument instead of returning
+a new array.</div></div>
+       <div class="codex-doc-node codex-operator codex-function"><code class="codex-name">ifft!</code><code class="codex-lambda-list">(array ω p)</code><div class="codex-docstring">The same as <code>ifft</code> but modifies its argument instead of returning
+a new array.</div></div>
      
    
    <h1 id="auxiliary-number-theoretic-functions">Auxiliary number-theoretic functions</h1>

@@ -10,27 +10,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Checkout Codex
-        uses: actions/checkout@v2
-        with:
-          repository: shamazmazum/codex
-          path: ~/lisp/codex
-      - name: Checkout docparser
-        uses: actions/checkout@v2
-        with:
-          repository: shamazmazum/docparser
-          path: ~/lisp/docparser
       - name: Install roswell
         run: |
           curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
-      - name: Install Ultralisp
+      - name: Install qlot
         run: |
-          ros -e '(ql-dist:install-dist "http://dist.ultralisp.org/" :prompt nil)'
-      - name: Get ASDF
+          ros install qlot
+      - name: Set Path
         run: |
-          wget https://common-lisp.net/project/asdf/archives/asdf.lisp
-          cp asdf.lisp $HOME/.roswell/lisp/quicklisp
-          sed -i.bak -e 's/(try (require "asdf"))// ' $HOME/.roswell/lisp/quicklisp/setup.lisp
+          echo "${HOME}/.roswell/bin" >> $GITHUB_PATH
       - name: Build documentation
         run: |
           ros -s codex -e '(codex:document :cl-polynomial)'

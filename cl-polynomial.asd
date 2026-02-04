@@ -32,3 +32,7 @@
     :components ((:file "package")
                  (:file "tests"))
     :depends-on (:fiveam :cl-polynomial))
+
+;; For qlot
+(defsystem :cl-polynomial/docs
+  :depends-on (:cl-polynomial :codex))

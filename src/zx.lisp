@@ -360,7 +360,7 @@ multiplied by a second returned value."
                       (factor-square-free f)))))
          c))))
 
-(sera:-> irreducible-p (p:polynomial)
+(sera:-> irreduciblep (p:polynomial)
          (values boolean &optional))
 (defun irreduciblep (polynomial)
   "Test if polynomial is irreducible in \\(\\mathbb{Z}[x]\\)."

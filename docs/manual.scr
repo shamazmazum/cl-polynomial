@@ -263,6 +263,7 @@ EXAMPLE> (fpx:modulo
        @cl:doc(function factor)
        @cl:doc(function totient)
        @cl:doc(function moebius)
+       @cl:doc(function maybe-prime-p)
        @cl:doc(variable *prime-source*)
      )
    @end(section)

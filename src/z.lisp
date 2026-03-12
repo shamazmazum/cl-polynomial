@@ -9,6 +9,7 @@
   (:export #:factor
            #:totient
            #:moebius
+           #:maybe-prime-p
            #:*prime-source*))
 (in-package :cl-polynomial/z)
 
@@ -93,3 +94,57 @@
  317 331 337 347 349 353 359 367 373 379 383 389 397 401 409 419 421 431 433
  439 443 449 457 461 463 467 479 487 491 499 503 509 521 523 541)
 @end(code)")
+
+
+;; Additional thanks to nakrakiiya!
+;; https://github.com/nakrakiiya/cl-prime-maker
+(serapeum:-> expt-mod (unsigned-byte unsigned-byte unsigned-byte)
+             (values unsigned-byte &optional))
+(defun expt-mod (a n q)
+  "Compute \\(a^n \\mod q\\)."
+  (labels ((mul-rem (a b)
+             (mod (* a b) q))
+           (%expt-mod (a n acc)
+             (cond
+               ((zerop n) acc)
+               ((evenp n)
+                (%expt-mod (mul-rem a a) (floor n 2) acc))
+               (t
+                (%expt-mod a (1- n) (mul-rem a acc))))))
+    (%expt-mod a n 1)))
+
+(declaim (inline %random))
+(defun %random (n)
+  (+ (random (- n 3)) 2))
+
+;; Fermat's little theorem states that if N is prime then A^N mod N = A. So
+;; to test if N is prime we choose some random A which is less than N and
+;; compute A^N mod N. If this is not equal to A then N is definitely not a
+;; prime. If the test succeeds then A might be a prime (certain composite
+;; numbers pass the Fermat test, these are called pseudo-primes), if we
+;; perform the test over and over again then the probability of mis-classifying
+;; the number reduces by roughly one half each time we perform the test. After
+;; (say) one hundred iterations the probability of mis-classifying a number
+;; is approximately 2^-100. So we can be fairly sure that the classification
+;; is correct.
+
+(declaim (inline test-prime-p))
+(defun test-prime-p (n a)
+  (= (expt-mod a (1- n) n) 1))
+
+(serapeum:-> maybe-prime-p ((integer 1) &optional alex:positive-fixnum)
+             (values boolean &optional))
+(defun maybe-prime-p (a &optional (ntests 100))
+  "Return @c(T) if @c(a) is probably prime.
+
+This is the Fermat primality test which can have false positives."
+  (labels ((%go (n)
+             (declare (type fixnum n))
+             (cond
+               ((zerop n) t)
+               ((test-prime-p a (%random a))
+                (%go (1- n))))))
+    (cond
+      ((< a 2) nil)
+      ((< a 4) t)
+      (t (%go ntests)))))

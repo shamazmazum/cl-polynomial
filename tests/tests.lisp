@@ -115,6 +115,15 @@
                          (if (zerop (rem n1 i)) (z:moebius i) 0))
                    0))))))
 
+(test prime
+  (loop with state = (make-random-state t)
+        repeat 50000 do
+          (let* ((n (random 100000000000))
+                 (factors (z:factor n)))
+            (if (z:maybe-prime-p n)
+                (is (not (cdr factors)))
+                (is (cdr factors))))))
+
 (in-suite algebra)
 
 (test evaluation

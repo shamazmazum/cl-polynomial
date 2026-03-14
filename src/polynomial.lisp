@@ -236,13 +236,13 @@ of @c(list->polynomial)."
 (defun add (&rest polynomials)
   "Add polynomials together"
   (reduce #'%add polynomials :initial-value +zero+))
-(define-compiler-macro add (&whole whole &rest polynomials)
-  (case (length polynomials)
-    (0 +zero+)
-    (1 (first polynomials))
-    (2 `(%add ,(first polynomials)
-              ,(second polynomials)))
-    (t whole)))
+(define-compiler-macro add (&rest polynomials)
+  (if polynomials
+      (reduce
+       (lambda (acc p)
+         `(%add ,acc ,p))
+       polynomials)
+      +zero+))
 
 (sera:-> map-poly ((sera:-> (integer) (values integer &optional)) polynomial)
          (values polynomial &optional))
@@ -290,11 +290,10 @@ coefficient is positive."
   (reduce #'%add polynomials
           :key #'negate
           :initial-value polynomial))
-(define-compiler-macro subtract (&whole whole polynomial &rest polynomials)
-  (case (length polynomials)
-    (0 polynomial)
-    (1 `(%add ,polynomial (negate ,(first polynomials))))
-    (t whole)))
+(define-compiler-macro subtract (polynomial &rest polynomials)
+  (if polynomials
+      `(%add ,polynomial (negate (add ,@polynomials)))
+      polynomial))
 
 (sera:-> multiply-monomial (monomial polynomial)
          (values polynomial &optional))
@@ -321,13 +320,13 @@ coefficient is positive."
 (defun multiply (&rest polynomials)
   "Multiply polynomials"
   (reduce #'%multiply polynomials :initial-value +one+))
-(define-compiler-macro multiply (&whole whole &rest polynomials)
-  (case (length polynomials)
-    (0 +one+)
-    (1 (first polynomials))
-    (2 `(%multiply ,(first polynomials)
-                   ,(second polynomials)))
-    (t whole)))
+(define-compiler-macro multiply (&rest polynomials)
+  (if polynomials
+      (reduce
+       (lambda (acc p)
+         `(%multiply ,acc ,p))
+       polynomials)
+      +one+))
 
 (sera:-> scale (polynomial integer)
          (values polynomial &optional))

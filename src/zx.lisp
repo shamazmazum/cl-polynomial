@@ -119,9 +119,9 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
                      (%lift h (cdr gs) (cons g acc)))))))
     (%lift f gs nil)))
 
-(sera:-> suitable-primes (p:polynomial)
-         (values si:iterator &optional))
-(defun suitable-primes (polynomial)
+(sera:-> suitable-prime (p:polynomial)
+         (values u:prime &optional))
+(defun suitable-prime (polynomial)
   "Return a suitable prime for reducing a factorization in
 \\(\\mathbb{Z}[x]\\) to a factorization in \\(\\mathbb{F}_p[x]\\)."
   (assert (not (p:polynomial= polynomial p:+zero+)))
@@ -130,42 +130,15 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
   ;; field (this factorization exists because POLYNOMIAL itself is
   ;; square-free).
   (let ((lc (p:leading-coeff polynomial)))
-    (si:filter
-     (lambda (prime)
-       (and (not (zerop (rem lc prime)))
-            (let ((sf-factors (fpx:square-free (fpx:modulo polynomial prime) prime)))
-              (and (= (length sf-factors) 1)
-                   (= (caar sf-factors) 1)))))
-     z:*prime-source*)))
-
-(declaim (type (integer 1) *different-primes* *factors-num-bound*))
-(defparameter *different-primes* 3
-  "When factoring a polynomial in \\(\\mathbb{Z}[x]\\) try at most
-this number of primes suitable for factorization to find a prime
-with minimal number of factors in \\(\\mathbb{F}_p[x]\\).")
-(defparameter *factors-num-bound* 10
-  "When factoring a polynomial in \\(\\mathbb{Z}[x]\\) and a number of
-factors in \\(\\mathbb{F}_p[x]\\) exceeds this number, try another
-prime \\(p\\) (with at most @c(*different-primes*) trials).")
-
-(sera:-> best-prime (p:polynomial)
-         (values (cons u:prime list) &optional))
-(defun best-prime (polynomial)
-  "Try to select a prime suitable for factorization which also results
-in a number of factors no more than @c(*factors-num-bound*) (if is is
-possible)."
-  (let ((primes (si:take *different-primes* (suitable-primes polynomial))))
-    (multiple-value-bind (prime rest-primes)
-        (si:consume-one primes)
-      (si:foldl
-       (lambda (acc prime)
-         (when (<= (length (cdr acc)) *factors-num-bound*)
-           (return-from best-prime acc))
-         (let ((rps (fpx:reducing-polynomials polynomial prime)))
-           (if (< (length (cdr acc)) (length rps)) acc
-               (cons prime rps))))
-       (cons prime (fpx:reducing-polynomials polynomial prime))
-       rest-primes))))
+    (values
+     (si:consume-one
+      (si:filter
+       (lambda (prime)
+         (and (not (zerop (rem lc prime)))
+              (let ((sf-factors (fpx:square-free (fpx:modulo polynomial prime) prime)))
+                (and (= (length sf-factors) 1)
+                     (= (caar sf-factors) 1)))))
+       z:*prime-source*)))))
 
 ;; https://en.wikipedia.org/wiki/Landau-Mignotte_bound
 (sera:-> suitable-bound (p:polynomial)
@@ -227,9 +200,8 @@ factors of \\(f\\)."
                  (if (p:polynomial= f p:+one+) acc
                      (recombine f factors acc comb-length q))))))
     (let* ((b (suitable-bound polynomial))
-           (prime-rps (best-prime polynomial))
-           (p   (car prime-rps))
-           (rps (cdr prime-rps)))
+           (p (suitable-prime polynomial))
+           (rps (fpx:reducing-polynomials polynomial p)))
       (multiple-value-bind (q n)
           (lifting-steps b p)
         (let ((monic-p (fpx:monic-polynomial (fpx:modulo polynomial p) p))

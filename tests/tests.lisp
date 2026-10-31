@@ -433,7 +433,7 @@
         ;; Generate a random square-free monic polynomial
         (let* ((poly (make-square-free-zx
                       (p:add (random-poly 20 state 10) (p:polynomial '((10 . 1))))))
-               (prime (si:consume-one (zx:suitable-primes poly)))
+               (prime (zx:suitable-prime poly))
                (fpx-factors (mapcar #'cdr (fpx:factor (fpx:modulo poly prime) prime)))
                (lifting-steps (nth-value 1 (zx:lifting-steps (zx:suitable-bound poly) prime)))
                (lifted-factors (zx:lift-factors poly fpx-factors prime lifting-steps)))

@@ -13,7 +13,7 @@
   (:export #:lift-factors
            #:lifting-steps
            #:remove-content
-           #:suitable-primes
+           #:suitable-prime
            #:suitable-bound
            #:divide
            #:remainder

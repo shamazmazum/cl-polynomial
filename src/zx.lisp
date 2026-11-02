@@ -136,7 +136,7 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
        (lambda (prime)
          (and (not (zerop (rem lc prime)))
               (let ((sf-factors (fpx:square-free (fpx:modulo polynomial prime) prime)))
-                (and (= (length sf-factors) 1)
+                (and (null (cdr sf-factors))
                      (= (caar sf-factors) 1)))))
        z:*prime-source*)))))
 
@@ -343,7 +343,7 @@ multiplied by a second returned value."
             (square-free p)
           (and (null rest)
                (= m 1)
-               (= (length (factor p)) 1))))))
+               (null (cdr (factor p))))))))
 
 (sera:-> cyclotomic ((integer 1))
          (values p:polynomial &optional))

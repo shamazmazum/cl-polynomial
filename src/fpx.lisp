@@ -251,10 +251,13 @@ square-free polynomial \\(f \\in \\mathbb{F}_p[x]\\)."
 (defun irreduciblep (f p)
   "Test if a polynomial \\(f \\in \\mathbb{F}_p[x]\\) is irreducible."
   (let ((factors (square-free f p)))
-    (if (= (length factors) 1)
-        (destructuring-bind (m . f) (car factors)
+    (if (null (cdr factors))
+        (destructuring-bind (m . f)
+            (car factors)
           (and (= m 1)
-               (= (length (la:nullspace (berlekamp-matrix f p) p)) 1))))))
+               ;; Nullspace Can be NIL (in case of a constant
+               ;; polynomial or have only one polynomial).
+               (null (cdr (la:nullspace (berlekamp-matrix f p) p))))))))
 
 (sera:-> berlekamp-reduce (p:polynomial list u:prime)
          (values list &optional))

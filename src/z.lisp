@@ -48,13 +48,18 @@
          (values (integer -1 1) &optional))
 (defun moebius (n)
   "Moebius function."
-  (let* ((factors (factor n))
-         (length (length factors)))
-    (cond
-      ((= n 1) 1)
-      ((/= length (length (remove-duplicates factors :test #'=))) 0)
-      ((evenp length) 1)
-      (t -1))))
+  (if (= n 1) 1
+      (labels ((%go (factors m)
+                 (cond
+                   ((null factors)
+                    (if (evenp m) 1 -1))
+                   ((and (cdr factors)
+                         (= (car  factors)
+                            (cadr factors)))
+                    0)
+                   (t
+                    (%go (cdr factors) (1+ m))))))
+        (%go (factor n) 0))))
 
 ;; The sieve of eratosthenes
 (sera:-> sieve (alex:positive-fixnum)

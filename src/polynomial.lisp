@@ -246,18 +246,18 @@ of @c(list->polynomial)."
 
 (sera:-> map-poly ((sera:-> (integer) (values integer &optional)) polynomial)
          (values polynomial &optional))
-(defun map-poly (fn polynomial)
+(defun map-poly (f p)
   "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
-\\(\\sum_n fn(a_n)x^n\\).
-
-This is @c(fmap) for a type @c(data Poly a b = Poly [(a, b)])."
+\\(\\sum_n fn(a_n)x^n\\)."
+  ;; This is not just a "map" because if F returns zero, that
+  ;; coefficient vanishes entirely.
   (declare (optimize (speed 3)))
   (polynomial
-   (mapcar
-    (lambda (m)
-      (bind-monomial (d c) m
-        (cons d (funcall fn c))))
-    (polynomial-coeffs polynomial))))
+   (loop for coeff in (polynomial-coeffs p)
+         for  d = (car coeff)
+         for  c = (cdr coeff)
+         for %c = (funcall f c)
+         unless (zerop %c) collect (cons d %c))))
 
 (sera:-> negate (polynomial)
          (values polynomial &optional))

@@ -29,7 +29,6 @@
 
 (sera:-> scale-divide (p:polynomial integer)
          (values p:polynomial &optional))
-(declaim (inline scale-divide))
 (defun scale-divide (poly a)
   (p:map-poly (lambda (x) (/ x a)) poly))
 

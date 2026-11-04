@@ -246,6 +246,7 @@ of @c(list->polynomial)."
 
 (sera:-> map-poly ((sera:-> (integer) (values integer &optional)) polynomial)
          (values polynomial &optional))
+(declaim (inline map-poly))
 (defun map-poly (f p)
   "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
 \\(\\sum_n fn(a_n)x^n\\)."
@@ -261,7 +262,6 @@ of @c(list->polynomial)."
 
 (sera:-> negate (polynomial)
          (values polynomial &optional))
-(declaim (inline negate))
 (defun negate (polynomial)
   "Given a polynomial \\(\\sum_n a_n x^n\\) return a polynomial
 \\(\\sum_n -a_n x^n\\).
@@ -330,7 +330,6 @@ coefficient is positive."
 
 (sera:-> scale (polynomial integer)
          (values polynomial &optional))
-(declaim (inline scale))
 (defun scale (polynomial c)
   "Multiply a polynomial by a constant."
   (map-poly (lambda (a) (* a c)) polynomial))

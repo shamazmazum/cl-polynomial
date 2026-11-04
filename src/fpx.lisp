@@ -36,18 +36,10 @@
 
 (sera:-> modulo (p:polynomial u:prime-power)
          (values p:polynomial &optional))
-(defun modulo (polynomial q)
-  "Return a polynomial with every coefficient of @c(polynomial) being
+(defun modulo (f q)
+  "Return a polynomial with every coefficient of @c(f) being
 taken modulo @c(q)."
-  (p:polynomial
-   (reduce
-    (lambda (monomial acc)
-      (p:bind-monomial (d c) monomial
-        (let ((c (u:mod-sym c q)))
-          (if (zerop c) acc (cons (cons d c) acc)))))
-    (p:polynomial-coeffs polynomial)
-    :from-end t
-    :initial-value nil)))
+  (p:map-poly (lambda (c) (u:mod-sym c q)) f))
 
 (sera:-> divide (p:polynomial p:polynomial u:prime-power)
          (values p:polynomial p:polynomial &optional))

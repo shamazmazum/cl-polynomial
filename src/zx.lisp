@@ -198,15 +198,20 @@ factors of \\(f\\)."
                (let ((acc (if maybe-factor (cons maybe-factor acc) acc)))
                  (if (p:polynomial= f p:+one+) acc
                      (recombine f factors acc comb-length q))))))
-    (let* ((b (suitable-bound polynomial))
-           (p (suitable-prime polynomial))
-           (rps (fpx:reducing-polynomials polynomial p)))
+    (let ((b (suitable-bound polynomial))
+          (p (suitable-prime polynomial)))
       (multiple-value-bind (q n)
           (lifting-steps b p)
-        (let ((monic-p (fpx:monic-polynomial (fpx:modulo polynomial p) p))
-              (monic-q (fpx:monic-polynomial polynomial q)))
+        (let* ((monic-p   (fpx:monic-polynomial (fpx:modulo polynomial p) p))
+               (monic-q   (fpx:monic-polynomial polynomial q))
+               (factors-p (if (<= p 7)
+                              (fpx:berlekamp-reduce
+                               monic-p (fpx:reducing-polynomials polynomial p) p)
+                              ;; big-field-factor does not work with constant polynomials,
+                              ;; but they all fall into another branch.
+                              (fpx:big-field-factor monic-p p))))
           (recombine polynomial
-                     (lift-factors monic-q (fpx:berlekamp-reduce monic-p rps p) p n)
+                     (lift-factors monic-q factors-p p n)
                      nil 1 q))))))
 
 ;; DIVIDE and GCD have their own versions for polynomials over

@@ -19,6 +19,7 @@
            #:distinct-degree
            #:berlekamp-reduce
            #:berlekamp-factor
+           #:big-field-factor
            #:reducing-polynomials
            #:irreduciblep
            #:factor

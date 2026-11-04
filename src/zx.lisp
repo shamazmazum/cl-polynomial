@@ -101,6 +101,12 @@ such that \\(f = g^* h^* \\mod p^{2^n}\\) if \\(f = g h \\mod p\\)."
                        (%lf g h s d q (1+ m)))))))
       (%lf g h s d p 0))))
 
+(defun scanr (f x xs)
+    (if (null xs)
+        (list x)
+        (let ((ys (scanr f x (cdr xs))))
+          (cons (funcall f (car xs) (car ys)) ys))))
+
 (sera:-> lift-factors (p:polynomial list u:prime (integer 0))
          (values list &optional))
 (defun lift-factors (f gs p n)
@@ -109,14 +115,18 @@ its factors in \\(\\mathbb{F}_p[x]\\), lift these factors to
 \\(\\mathbb{Z}_{p^{2^n}}[x]\\)."
   (unless gs
     (error "The list of factors is empty"))
-  (labels ((%lift (f gs acc)
+  (labels ((%lift (f gs ps acc)
              (if (null gs) acc
                  (let ((g (car gs))
-                       (h (fpx:modulo (apply #'p:multiply (cdr gs)) p)))
+                       (h (car ps)))
                    (multiple-value-bind (g h)
                        (lift-two-factors f g h p n)
-                     (%lift h (cdr gs) (cons g acc)))))))
-    (%lift f gs nil)))
+                     (%lift h (cdr gs) (cdr ps) (cons g acc)))))))
+    (let ((ps (scanr
+               (lambda (f g)
+                 (fpx:modulo (p:multiply f g) p))
+               p:+one+ (cdr gs))))
+      (%lift f gs ps nil))))
 
 (sera:-> suitable-prime (p:polynomial)
          (values u:prime &optional))

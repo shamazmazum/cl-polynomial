@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 0.4.1
+
+* Improvement: Fermat primality test, CL-POLYNOMIAL/Z:MAYBE-PRIME-P was added.
+* Improvement: Cantor-Zassenhaus algorithm for factorization in a finite field
+  with big number of elements is now used in CL-POLYNOMIAL/ZX:FACTOR when
+  appropriate.
+* Improvement: Factor recombination from a finite ring to ℤ[x] is somewhat
+  faster.
+* Bug fix: CL-POLYNOMIAL/FPX:IRREDUCIBLEP returns T when called with constant
+  polynomials.
+* Bug fix: MAP-POLY can be used with functions which return zero (strictly
+  speaking, POLYNOMIAL is not a functor).
+
 ## Version 0.4.0
 
 * Incompatible change: FFT is now calculated for arrays of fixnums rather than

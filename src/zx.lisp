@@ -45,6 +45,43 @@ part and content."
                   :initial-value 0)))
     (values (scale-divide f content) content)))
 
+;; DIVIDE and GCD have their own versions for polynomials over
+;; integers. DIVIDE can be used only for exact division externally.
+(sera:-> divide (p:polynomial p:polynomial)
+         (values p:polynomial p:polynomial &optional))
+(defun divide (poly1 poly2)
+  (let ((degree (p:degree poly2))
+        (lc (p:leading-coeff poly2)))
+    (if (zerop degree)
+        ;; Division by a constant is a special case
+        (values
+         (scale-divide poly1 lc)
+         p:+zero+)
+        (labels ((division-step (quotient-coeffs remainder)
+                   (declare (type list quotient-coeffs)
+                            (type p:polynomial remainder))
+                   (let* ((remainder-coeffs (p:polynomial-coeffs remainder))
+                          (d (caar remainder-coeffs))
+                          (c (cdar remainder-coeffs)))
+                     (if (or (< (p:degree remainder) degree)
+                             (not (zerop (rem c lc))))
+                         (values (p:polynomial (reverse quotient-coeffs))
+                                 remainder)
+                         (let* ((quotient-degree (- d degree))
+                                (quotient-coeff (/ c lc))
+                                (monomial (cons quotient-degree quotient-coeff)))
+                           (division-step
+                            (cons monomial quotient-coeffs)
+                            (p:subtract remainder
+                                        (p::multiply-monomial monomial poly2))))))))
+          (division-step nil poly1)))))
+
+(sera:-> remainder (p:polynomial p:polynomial)
+         (values p:polynomial &optional))
+(declaim (inline remainder))
+(defun remainder (poly1 poly2)
+  (nth-value 1 (divide poly1 poly2)))
+
 ;; ========================================
 ;; Quadratic lifting
 ;; https://www.csd.uwo.ca/~mmorenom/CS874/Lectures/Newton2Hensel.html/node17.html
@@ -188,13 +225,16 @@ factors of \\(f\\)."
              ;; removed from ALL-FACTORS and a newly found "true" factor is returned.
              (if (null combs)
                  (values f all-factors (1+ comb-length))
-                 (let* ((c1 (car combs))
-                        (c2 (set-difference all-factors c1 :test #'p:polynomial=))
-                        (f1 (restore-factor c1 f q))
-                        (f2 (restore-factor c2 f q)))
-                   (if (p:polynomial= f (p:multiply f1 f2))
-                       (values f2 c2 comb-length f1)
-                       (try-combinations f (cdr combs) all-factors comb-length q)))))
+                 (let* ((c (car combs))
+                        (g (restore-factor c f q)))
+                   ;; KLUDGE: Currently it's cheaper to divide once than calling (reduce
+                   ;; #'p:multiply).
+                   (multiple-value-bind (h r)
+                       (divide f g)
+                     (if (p:polynomial= r p:+zero+)
+                         (values h (set-difference all-factors c :test #'p:polynomial=)
+                                 comb-length g)
+                         (try-combinations f (cdr combs) all-factors comb-length q))))))
            (recombine (f factors acc comb-length q)
              ;; F ∈ ℤ[x]. Generate combinations from factors of F mod Q in ℤ_q[x] and try
              ;; to detect products of which combinations are the factors of F in ℤ[x]. For
@@ -223,43 +263,6 @@ factors of \\(f\\)."
           (recombine polynomial
                      (lift-factors monic-q factors-p p n)
                      nil 1 q))))))
-
-;; DIVIDE and GCD have their own versions for polynomials over
-;; integers. DIVIDE can be used only for exact division externally.
-(sera:-> divide (p:polynomial p:polynomial)
-         (values p:polynomial p:polynomial &optional))
-(defun divide (poly1 poly2)
-  (let ((degree (p:degree poly2))
-        (lc (p:leading-coeff poly2)))
-    (if (zerop degree)
-        ;; Division by a constant is a special case
-        (values
-         (scale-divide poly1 lc)
-         p:+zero+)
-        (labels ((division-step (quotient-coeffs remainder)
-                   (declare (type list quotient-coeffs)
-                            (type p:polynomial remainder))
-                   (let* ((remainder-coeffs (p:polynomial-coeffs remainder))
-                          (d (caar remainder-coeffs))
-                          (c (cdar remainder-coeffs)))
-                     (if (or (< (p:degree remainder) degree)
-                             (not (zerop (rem c lc))))
-                         (values (p:polynomial (reverse quotient-coeffs))
-                                 remainder)
-                         (let* ((quotient-degree (- d degree))
-                                (quotient-coeff (/ c lc))
-                                (monomial (cons quotient-degree quotient-coeff)))
-                           (division-step
-                            (cons monomial quotient-coeffs)
-                            (p:subtract remainder
-                                        (p::multiply-monomial monomial poly2))))))))
-          (division-step nil poly1)))))
-
-(sera:-> remainder (p:polynomial p:polynomial)
-         (values p:polynomial &optional))
-(declaim (inline remainder))
-(defun remainder (poly1 poly2)
-  (nth-value 1 (divide poly1 poly2)))
 
 ;; https://en.wikipedia.org/wiki/Polynomial_greatest_common_divisor#Subresultant_pseudo-remainder_sequence
 

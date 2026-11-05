@@ -74,11 +74,8 @@ a {
     font-weight: 400;
 }
 
-.content p code,
-.content li code,
-.content .codex-docstring code {
+.content p code {
     font-size: 16px;
-    background: #f0f0f0;
 }
 
 .content > *, .content blockquote > * {
